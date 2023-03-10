@@ -7,6 +7,17 @@ use halo2_proofs::{
     poly::Rotation,
 };
 
+#[derive(Clone)]
+struct Number<F: FieldExt>(AssignedCell<F, F>);
+
+#[derive(Clone, Debug)]
+struct FieldConfig {
+    advice: [Column<Advice>; 2],
+    instance: Column<Instance>,
+
+    s_mul: Selector,
+}
+
 trait NumericInstructions<F: FieldExt>: Chip<F> {
     type Num;
 
@@ -32,14 +43,6 @@ impl<F: FieldExt> Chip<F> for FieldChip<F> {
     fn loaded(&self) -> &Self::Loaded {
         &()
     }
-}
-
-#[derive(Clone, Debug)]
-struct FieldConfig {
-    advice: [Column<Advice>; 2],
-    instance: Column<Instance>,
-
-    s_mul: Selector,
 }
 
 impl <F: FieldExt> FieldChip<F> {
@@ -80,9 +83,6 @@ impl <F: FieldExt> FieldChip<F> {
     }
 }
 
-#[derive(Clone)]
-struct Number<F: FieldExt>(AssignedCell<F, F>);
-
 impl<F: FieldExt> NumericInstructions<F> for FieldChip<F> {
     type Num = Number<F>;
 
@@ -109,11 +109,9 @@ impl<F: FieldExt> NumericInstructions<F> for FieldChip<F> {
         layouter.assign_region(
             || "load constant",
             |mut region| {
-                region.assign_advice_from_constant(
-                    ||"constant value",
-                    config.advice[0], 0,
-                    constant
-                ).map(Number)
+                region
+                    .assign_advice_from_constant(||"constant value", config.advice[0], 0, constant)
+                    .map(Number)
             },
         )
     }
