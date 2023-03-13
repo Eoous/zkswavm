@@ -212,7 +212,18 @@ fn main() {
     let prover = MockProver::run(k, &circuit, vec![public_inputs.clone()]).unwrap();
     assert_eq!(prover.verify(), Ok(()));
 
-    // If we try some other public input, the proof will fail!
+    use plotters::prelude::*;
+    let root = BitMapBackend::new("layout.png", (1024, 768)).into_drawing_area();
+    root.fill(&WHITE).unwrap();
+    let root = root
+        .titled("Example Circuit Layout", ("sans-serif", 60))
+        .unwrap();
+
+    halo2_proofs::dev::CircuitLayout::default()
+        .show_labels(true)
+        .render(5, &circuit, &root)
+        .unwrap();
+
     public_inputs[0] += Fp::one();
     let prover = MockProver::run(k, &circuit, vec![public_inputs]).unwrap();
     assert!(prover.verify().is_err());
