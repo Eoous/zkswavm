@@ -11,3 +11,5 @@ num-integer = "0.1.45"
 rand = "0.8"
 num-bigint = { version = "0.4", features = ["rand"] }
 num-traits = "0.2.15"
+
+wasmi = { git = "https://github.com/DelphinusLab/wasmi", rev = "b5155dd70bfc9b594695f2fb45ba136c2637ef4f" }

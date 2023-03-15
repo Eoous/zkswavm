@@ -4,6 +4,7 @@ use halo2_proofs::circuit::Value;
 use halo2_proofs::plonk::{Column, Error, Fixed};
 use num_bigint::BigUint;
 use num_traits::Zero;
+use wasmi::tracer::itable::IEntry;
 
 use crate::utils::{bn_to_field, Context};
 
@@ -29,6 +30,18 @@ impl Instruction {
         bn <<= 64u8;
         bn += self.opcode;
         bn
+    }
+}
+
+impl From<IEntry> for Instruction {
+    fn from(ientry: IEntry) -> Instruction {
+        Instruction {
+            moid: ientry.module_instance_index,
+            fid: ientry.func_index,
+            bid: 0,
+            iid: ientry.pc,
+            opcode: ientry.opcode,
+        }
     }
 }
 
