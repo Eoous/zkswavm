@@ -10,6 +10,7 @@ use crate::utils::{bn_to_field, Context};
 
 pub struct Instruction {
     moid: u16,
+    mmid: u16,
     fid: u16,
     bid: u16,
     iid: u16,
@@ -18,9 +19,18 @@ pub struct Instruction {
 
 impl Instruction {
     pub fn encode(&self) -> BigUint {
+        let mut bn = self.encode_addr();
+        bn <<= 64u8;
+        bn += self.opcode;
+        bn
+    }
+
+    pub fn encode_addr(&self) -> BigUint {
         let mut bn = BigUint::zero();
         bn <<= 16u8;
         bn += self.moid;
+        bn <<= 16u8;
+        bn <<= self.mmid;
         bn <<= 16u8;
         bn += self.fid;
         bn <<= 16u8;

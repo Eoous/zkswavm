@@ -6,7 +6,7 @@ use wasmi::tracer::etable::{EEntry, RunInstructionTraceStep};
 use crate::instruction::Instruction;
 
 pub struct Event {
-    id: u64,
+    eid: u64,
     sp: u64,
     last_just_eid: u64,
     instruction: Instruction,
@@ -14,9 +14,9 @@ pub struct Event {
 }
 
 impl From<EEntry> for Event {
-    fn from(eentry: EEntry) -> Self {
+    fn from(eentry:EEntry ) -> Self {
         Event {
-            id: eentry.id,
+            eid: eentry.id,
             sp: eentry.sp,
             last_just_eid: 0,
             instruction: Instruction::from(eentry.inst),
@@ -26,10 +26,29 @@ impl From<EEntry> for Event {
 }
 
 pub struct EventConfig {
-    cols: Vec<Column<Advice>>,
+    cols: [Column<Advice>; 4],
+    aux_cols: [Column<Advice>; 4],
+}
+
+impl EventConfig {
+    pub fn new(cols: [Column<Advice>; 4], aux_cols: [Column<Advice>; 4]) -> EventConfig {
+        EventConfig {
+            cols,
+            aux_cols
+        }
+    }
 }
 
 pub struct EventChip<F: FieldExt> {
     config: EventConfig,
     _phantom: PhantomData<F>
+}
+
+impl<F: FieldExt> EventChip<F> {
+    pub fn new(config: EventConfig) -> EventChip<F> {
+        EventChip {
+            config,
+            _phantom: PhantomData,
+        }
+    }
 }
