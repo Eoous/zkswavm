@@ -47,7 +47,7 @@ impl<F: FieldExt> MemoryInitConfig<F> {
     }
 
     pub fn configure_in_range(&self, meta: &mut ConstraintSystem<F>, key: &'static str, expr: impl FnOnce(&mut VirtualCells<'_, F>) -> Expression<F>) {
-        meta.lookup(key, |meta| vec![(expr(meta), self.col)]);
+        meta.lookup(|meta| vec![(expr(meta), self.col)]);
     }
 }
 

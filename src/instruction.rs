@@ -46,11 +46,12 @@ impl Instruction {
 impl From<IEntry> for Instruction {
     fn from(ientry: IEntry) -> Instruction {
         Instruction {
-            moid: ientry.module_instance_index,
-            fid: ientry.func_index,
+            moid: ientry.module_instance_index as u16,
+            mmid: 0,
+            fid: ientry.func_index as u16,
             bid: 0,
-            iid: ientry.pc,
-            opcode: ientry.opcode,
+            iid: ientry.pc as u16,
+            opcode: ientry.opcode as u64,
         }
     }
 }
