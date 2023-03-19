@@ -46,8 +46,8 @@ impl<F: FieldExt> RowDiffConfig<F> {
     }
 
     pub fn diff(&self, meta: &mut VirtualCells<F>) -> Expression<F> {
-        let cur = meta.query_advice(self.data, Rotation::cur()),
-        let pre = meta.query_advice(self.data, Rotation::prev()),
+        let cur = meta.query_advice(self.data, Rotation::cur());
+        let pre = meta.query_advice(self.data, Rotation::prev());
         cur - pre
     }
 }
