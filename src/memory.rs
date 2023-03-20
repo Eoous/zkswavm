@@ -107,7 +107,7 @@ impl<F: FieldExt> MemoryConfig<F> {
         memory.configure_stack_or_heap(meta);
         memory.configure_range(meta, range);
         memory.configure_same_location(meta);
-        
+
         memory
     }
 
