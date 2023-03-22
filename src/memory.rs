@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 use halo2_proofs::arithmetic::FieldExt;
-use halo2_proofs::plonk::{Advice, Column, ConstraintSystem, Expression};
+use halo2_proofs::plonk::{Advice, Column, ConstraintSystem, Expression, VirtualCells};
 use halo2_proofs::poly::Rotation;
 
 use crate::memory_init::MemoryInitConfig;
@@ -166,8 +166,34 @@ impl<F: FieldExt> MemoryConfig<F> {
     }
 
     fn configure_sort(&self, meta: &mut ConstraintSystem<F>, range: &RangeConfig<F>) -> &MemoryConfig<F> {
-
+        range.configure_in_range(meta, |meta| {
+            self.is_enable(meta) * self.ltype.diff(meta)
+        });
+        range.configure_in_range(meta, |meta| {
+            self.is_enable(meta) * self.ltype.is_same(meta) * self.mmid.diff(meta)
+        });
+        range.configure_in_range(meta, |meta| {
+            self.is_enable(meta) * self.ltype.is_same(meta) * self.mmid.is_same(meta) * self.offset.is_same(meta)
+        });
+        range.configure_in_range(meta, |meata| {
+            self.is_enable(meta) * self.is_same_location(meta) * self.eid.diff(meta)
+        });
+        range.configure_in_range(meta, |meta| {
+            self.is_enable(meta)
+                * self.is_same_location(meta)
+                * self.eid.is_same(meta)
+                * (meta.query_advice(self.emid, Rotation::cur())
+                 - meta.query_advice(self.emid, Rotation::prev()))
+        });
 
         self
+    }
+
+    fn is_same_location(&self, meta: &mut VirtualCells<F>) -> Expression<F> {
+        meta.query_advice(self.same_location, Rotation::cur())
+    }
+
+    fn is_enable(&self, meta: &mut VirtualCells<F>) -> Expression<F> {
+        meta.query_advice(self.enable, Rotation::cur())
     }
 }
