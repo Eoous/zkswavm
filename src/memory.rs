@@ -42,7 +42,7 @@ pub enum VarType {
     I32
 }
 
-pub struct MemoryEvent {
+pub struct Memory {
     eid: u64,
     mmid: u64,
     offset: u64,
@@ -52,7 +52,7 @@ pub struct MemoryEvent {
     value: u64,
 }
 
-impl MemoryEvent {
+impl Memory {
 
 }
 
