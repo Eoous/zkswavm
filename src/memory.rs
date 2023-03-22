@@ -104,9 +104,11 @@ impl<F: FieldExt> MemoryConfig<F> {
         let memory = Self::new(meta, cols);
 
         memory.configure_enable(meta);
+        memory.configure_sort(meta, range);
         memory.configure_stack_or_heap(meta);
         memory.configure_range(meta, range);
         memory.configure_same_location(meta);
+        memory.configure_rule(meta, memory_init);
 
         memory
     }
@@ -175,7 +177,7 @@ impl<F: FieldExt> MemoryConfig<F> {
         range.configure_in_range(meta, |meta| {
             self.is_enable(meta) * self.ltype.is_same(meta) * self.mmid.is_same(meta) * self.offset.is_same(meta)
         });
-        range.configure_in_range(meta, |meata| {
+        range.configure_in_range(meta, |meta| {
             self.is_enable(meta) * self.is_same_location(meta) * self.eid.diff(meta)
         });
         range.configure_in_range(meta, |meta| {
@@ -187,6 +189,55 @@ impl<F: FieldExt> MemoryConfig<F> {
         });
 
         self
+    }
+
+    fn configure_rule(&self, meta: &mut ConstraintSystem<F>, memory_init: &MemoryInitConfig<F>) -> &MemoryConfig<F> {
+        meta.create_gate("read after write", |meta| {
+            vec![
+                self.is_enable(meta) * self.is_read_not_bit(meta) * self.diff(meta, self.value),
+                self.is_enable(meta) * self.is_read_not_bit(meta) * self.diff(meta, self.vtype),
+            ]
+        });
+
+        meta.create_gate("stack first line", |meta| {
+            vec![
+                self.is_enable(meta)
+                    * (self.is_same_location(meta) - Expression::Constant(F::one()))
+                    * self.is_stack(meta)
+                    * (meta.query_advice(self.atype, Rotation::cur()) - AccessType::Write.into()),
+            ]
+        });
+
+        // first line in heap
+        memory_init.configure_in_range(meta, |meta| {
+            self.is_enable(meta)
+                * (Expression::Constant(F::one()) - self.is_same_location(meta))
+                * self.is_heap(meta)
+                * memory_init.encode(
+                self.mmid.data(meta),
+                self.offset.data(meta),
+                meta.query_advice(self.value, Rotation::cur())
+                )
+        });
+
+        self
+    }
+
+    fn is_heap(&self, meta: &mut VirtualCells<F>) -> Expression<F> {
+        Expression::Constant(F::one()) - self.ltype.data(meta)
+    }
+
+    fn is_stack(&self, meta: &mut VirtualCells<F>) -> Expression<F> {
+        self.ltype.data(meta)
+    }
+
+    fn diff(&self, meta: &mut VirtualCells<F>, col: Column<Advice>) -> Expression<F> {
+        meta.query_advice(col, Rotation::cur()) - meta.query_advice(col, Rotation::prev())
+    }
+
+    fn is_read_not_bit(&self, meta: &mut VirtualCells<F>) -> Expression<F> {
+        let atype = meta.query_advice(self.atype, Rotation::cur());
+        (atype.clone() - AccessType::Init.into()) * (atype - AccessType::Write.into())
     }
 
     fn is_same_location(&self, meta: &mut VirtualCells<F>) -> Expression<F> {
