@@ -145,7 +145,7 @@ impl<F: FieldExt> MemoryConfig<F> {
             vec![
                 ltype.clone() * (ltype - Expression::Constant(F::one()))
             ]
-        })?;
+        });
 
         self
     }
@@ -156,7 +156,7 @@ impl<F: FieldExt> MemoryConfig<F> {
         range.configure_in_range(meta, |meta| self.eid.data(meta));
 
         range.configure_in_range(meta, |meta| {
-            meta.query_advice(self.emid, Rotation:cur())
+            meta.query_advice(self.emid, Rotation::cur())
         });
         range.configure_in_range(meta, |meta| {
             meta.query_advice(self.vtype, Rotation::cur())

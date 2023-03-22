@@ -15,6 +15,14 @@ pub struct JumpConfig {
     cols: [Column<Advice>; 3],
 }
 
+impl JumpConfig {
+    fn new(cols: [Column<Advice>; 3]) -> JumpConfig {
+        JumpConfig {
+            cols
+        }
+    }
+}
+
 pub struct JumpChip<F: FieldExt> {
     config: JumpConfig,
     _phantom: PhantomData<F>,

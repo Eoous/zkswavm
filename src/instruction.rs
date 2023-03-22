@@ -60,6 +60,14 @@ pub struct InstructionConfig {
     col: Column<Fixed>,
 }
 
+impl InstructionConfig {
+    fn new(col: Column<Fixed>) -> InstructionConfig {
+        InstructionConfig {
+            col
+        }
+    }
+}
+
 pub struct InstructionChip<F: FieldExt> {
     config: InstructionConfig,
     _phantom: PhantomData<F>,
@@ -68,7 +76,7 @@ pub struct InstructionChip<F: FieldExt> {
 impl<F: FieldExt> InstructionChip<F> {
     pub fn add_inst(&self, ctx: &mut Context<'_, F>, inst: Instruction) -> Result<(), Error> {
         let value: Value<F>= Value::known(bn_to_field(&inst.encode()));
-        println!("{:?}", bn_to_field::<F>(&inst.encode()));
+
         ctx.region.assign_fixed(
             || "instruction table",
             self.config.col,
