@@ -3,6 +3,7 @@ use crate::event::Event;
 
 use crate::instruction::Instruction;
 use crate::memory::MemoryEvent;
+use crate::opcode::memory_event_of_step;
 
 pub struct CircuitBuilder {
     pub(crate) instruction_table: Vec<Instruction>,
@@ -20,7 +21,7 @@ impl CircuitBuilder {
             Event::from(eentry)
         }).collect();
 
-        let memory_table = event_table.iter().map(|event| {
+        let memory_table: Vec<Vec<MemoryEvent>> = event_table.iter().map(|event| {
             memory_event_of_step(event)
         }).collect();
         let memory_table = memory_table.into_iter().flat_map(|x| {
