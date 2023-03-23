@@ -10,7 +10,7 @@ use crate::utils::{bn_to_field, Context};
 
 pub struct Instruction {
     moid: u16,
-    mmid: u16,
+    pub(crate) mmid: u16,
     fid: u16,
     bid: u16,
     iid: u16,
@@ -47,7 +47,7 @@ impl From<IEntry> for Instruction {
     fn from(ientry: IEntry) -> Instruction {
         Instruction {
             moid: ientry.module_instance_index as u16,
-            mmid: 0,
+            mmid: ientry.module_instance_index as u16,
             fid: ientry.func_index as u16,
             bid: 0,
             iid: ientry.pc as u16,

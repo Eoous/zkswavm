@@ -7,6 +7,7 @@ pub mod builder;
 pub mod memory;
 pub mod row_diff;
 pub mod range;
+pub mod opcode;
 
 fn main() {
     println!("Hello, world!");

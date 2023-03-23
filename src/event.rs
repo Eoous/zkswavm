@@ -6,11 +6,11 @@ use wasmi::tracer::etable::{EEntry, RunInstructionTraceStep};
 use crate::instruction::Instruction;
 
 pub struct Event {
-    eid: u64,
-    sp: u64,
+    pub(crate) eid: u64,
+    pub(crate) sp: u64,
     last_just_eid: u64,
-    instruction: Instruction,
-    step_info: RunInstructionTraceStep,
+    pub(crate) instruction: Instruction,
+    pub(crate) step_info: RunInstructionTraceStep,
 }
 
 impl From<EEntry> for Event {

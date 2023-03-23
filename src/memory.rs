@@ -42,7 +42,7 @@ pub enum VarType {
     I32
 }
 
-pub struct Memory {
+pub struct MemoryEvent {
     eid: u64,
     mmid: u64,
     offset: u64,
@@ -52,8 +52,22 @@ pub struct Memory {
     value: u64,
 }
 
-impl Memory {
-
+impl MemoryEvent {
+    pub fn new(
+        eid: u64,
+        mmid: u64,
+        offset: u64,
+        ltype: LocationType,
+        atype: AccessType,
+        vtype: VarType,
+        value: u64,
+    ) -> MemoryEvent {
+        MemoryEvent {
+            eid, mmid, offset,
+            ltype, atype, vtype,
+            value
+        }
+    }
 }
 
 pub struct MemoryConfig<F: FieldExt> {
