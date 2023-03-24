@@ -5,6 +5,8 @@ pub(crate) fn mem_op_from_stack_only_step
 (
     eid: u64,
     mmid: u64,
+    inputs_type: VarType,
+    outputs_type: VarType,
     pop_value: &[u64; POP_SIZE],
     push_value: &[u64; PUSH_SIZE],
 ) -> Vec<MemoryEvent> {
@@ -17,7 +19,7 @@ pub(crate) fn mem_op_from_stack_only_step
             i as u64,
             LocationType::Stack,
             AccessType::Read,
-            VarType::I32,
+            inputs_type,
             pop_value[i]
         ));
     }
@@ -29,7 +31,7 @@ pub(crate) fn mem_op_from_stack_only_step
             i as u64,
             LocationType::Stack,
             AccessType::Write,
-            VarType::I32,
+            outputs_type,
             push_value[i],
         ));
     }
