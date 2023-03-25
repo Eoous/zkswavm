@@ -26,3 +26,31 @@ macro_rules! cur {
         $meta.query_advice($x, halo2_proofs::poly::Rotation::cur())
     };
 }
+
+#[macro_export]
+macro_rules! pre {
+    ($meta: expr, $x: expr) => {
+        $meta.query_advice($x, halo2_proofs::poly::Rotation::prev())
+    };
+}
+
+#[macro_export]
+macro_rules! next {
+    ($meta: expr, $x: expr) => {
+        $meta.query_advice($x, halo2_proofs::poly::Rotation::next())
+    };
+}
+
+#[macro_export]
+macro_rules! constant_from {
+    ($x: expr) => {
+        halo2_proofs::plonk::Expression::Constant(F::from($x))
+    };
+}
+
+#[macro_export]
+macro_rules! constant {
+    ($x: expr) => {
+        halo2_proofs::plonk::Expression::Constant($x)
+    };
+}

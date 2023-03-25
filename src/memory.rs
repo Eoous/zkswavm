@@ -6,6 +6,9 @@ use halo2_proofs::poly::Rotation;
 use crate::memory_init::MemoryInitConfig;
 use crate::range::RangeConfig;
 use crate::row_diff::RowDiffConfig;
+use crate::{
+    cur, pre, next
+};
 
 pub enum LocationType {
     Heap,
@@ -130,8 +133,8 @@ impl<F: FieldExt> MemoryConfig<F> {
 
     fn configure_enable(&self, meta: &mut ConstraintSystem<F>) -> &MemoryConfig<F> {
         meta.create_gate("enable seq", |meta| {
-            let cur = meta.query_advice(self.enable, Rotation::cur());
-            let next = meta.query_advice(self.enable, Rotation::next());
+            let cur = cur!(meta, self.enable);
+            let next = next!(meta, self.enable);
 
             vec![
                 next * (cur.clone() - Expression::Constant(F::one())),
@@ -144,7 +147,7 @@ impl<F: FieldExt> MemoryConfig<F> {
 
     fn configure_same_location(&self, meta: &mut ConstraintSystem<F>) -> &MemoryConfig<F> {
         meta.create_gate("is same location", |meta| {
-            let same_location = meta.query_advice(self.same_location, Rotation::cur());
+            let same_location = cur!(meta, self.same_location);
 
             vec![
                 self.ltype.is_same(meta) * self.mmid.is_same(meta) * self.offset.is_same(meta)
@@ -172,12 +175,8 @@ impl<F: FieldExt> MemoryConfig<F> {
         range.configure_in_range(meta, |meta| self.offset.data(meta));
         range.configure_in_range(meta, |meta| self.eid.data(meta));
 
-        range.configure_in_range(meta, |meta| {
-            meta.query_advice(self.emid, Rotation::cur())
-        });
-        range.configure_in_range(meta, |meta| {
-            meta.query_advice(self.vtype, Rotation::cur())
-        });
+        range.configure_in_range(meta, |meta| cur!(meta, self.emid));
+        range.configure_in_range(meta, |meta| cur!(meta, self.vtype));
 
         self
     }
@@ -199,8 +198,7 @@ impl<F: FieldExt> MemoryConfig<F> {
             self.is_enable(meta)
                 * self.is_same_location(meta)
                 * self.eid.is_same(meta)
-                * (meta.query_advice(self.emid, Rotation::cur())
-                 - meta.query_advice(self.emid, Rotation::prev()))
+                * (cur!(meta, self.emid) - pre!(meta, self.emid))
         });
 
         self
@@ -219,7 +217,7 @@ impl<F: FieldExt> MemoryConfig<F> {
                 self.is_enable(meta)
                     * (self.is_same_location(meta) - Expression::Constant(F::one()))
                     * self.is_stack(meta)
-                    * (meta.query_advice(self.atype, Rotation::cur()) - AccessType::Write.into()),
+                    * (cur!(meta, self.atype) - AccessType::Write.into()),
             ]
         });
 
@@ -231,7 +229,7 @@ impl<F: FieldExt> MemoryConfig<F> {
                 * memory_init.encode(
                 self.mmid.data(meta),
                 self.offset.data(meta),
-                meta.query_advice(self.value, Rotation::cur())
+                cur!(meta, self.value),
                 )
         });
 
@@ -247,19 +245,19 @@ impl<F: FieldExt> MemoryConfig<F> {
     }
 
     fn diff(&self, meta: &mut VirtualCells<F>, col: Column<Advice>) -> Expression<F> {
-        meta.query_advice(col, Rotation::cur()) - meta.query_advice(col, Rotation::prev())
+        cur!(meta, col) - pre!(meta, col)
     }
 
     fn is_read_not_bit(&self, meta: &mut VirtualCells<F>) -> Expression<F> {
-        let atype = meta.query_advice(self.atype, Rotation::cur());
+        let atype = cur!(meta, self.atype);
         (atype.clone() - AccessType::Init.into()) * (atype - AccessType::Write.into())
     }
 
     fn is_same_location(&self, meta: &mut VirtualCells<F>) -> Expression<F> {
-        meta.query_advice(self.same_location, Rotation::cur())
+        cur!(meta, self.same_location)
     }
 
     fn is_enable(&self, meta: &mut VirtualCells<F>) -> Expression<F> {
-        meta.query_advice(self.enable, Rotation::cur())
+        cur!(meta, self.enable)
     }
 }
