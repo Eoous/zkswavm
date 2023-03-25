@@ -15,6 +15,7 @@ pub struct Instruction {
     bid: u16,
     iid: u16,
     opcode: u64,
+    aux: u64
 }
 
 impl Instruction {
@@ -22,6 +23,8 @@ impl Instruction {
         let mut bn = self.encode_addr();
         bn <<= 64u8;
         bn += self.opcode;
+        bn <<= 64u8;
+        bn += self.aux;
         bn
     }
 
@@ -52,6 +55,7 @@ impl From<IEntry> for Instruction {
             bid: 0,
             iid: ientry.pc as u16,
             opcode: ientry.opcode as u64,
+            aux: 0,
         }
     }
 }

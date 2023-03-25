@@ -8,7 +8,7 @@ use crate::instruction::Instruction;
 pub struct Event {
     pub(crate) eid: u64,
     pub(crate) sp: u64,
-    last_just_eid: u64,
+    pub(crate) last_jump_eid: u64,
     pub(crate) instruction: Instruction,
     pub(crate) step_info: RunInstructionTraceStep,
 }
@@ -18,7 +18,7 @@ impl From<EEntry> for Event {
         Event {
             eid: eentry.id,
             sp: eentry.sp,
-            last_just_eid: 0,
+            last_jump_eid: 0,
             instruction: Instruction::from(eentry.inst),
             step_info: eentry.step,
         }

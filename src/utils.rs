@@ -19,3 +19,10 @@ pub fn bn_to_field<F: FieldExt>(bn: &BigUint) -> F {
     bytes.read_exact(&mut compressed[..]).unwrap();
     F::from_bytes_wide(&mut compressed)
 }
+
+#[macro_export]
+macro_rules! cur {
+    ($meta: expr, $x: expr) => {
+        $meta.query_advice($x, halo2_proofs::poly::Rotation::cur())
+    };
+}
