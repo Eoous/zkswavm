@@ -11,7 +11,18 @@ pub fn memory_event_of_step(event: &Event) -> Vec<MemoryEvent> {
 
     match event.step_info {
         RunInstructionTraceStep::BrIfNez { value, dst_pc } => todo!(),
-        RunInstructionTraceStep::Return { drop, keep } => todo!(),
+        RunInstructionTraceStep::Return { drop, keep} => {
+            let drop_values: [u64;0] = [];
+            let keep_values: [u64;0] = [];
+            assert_eq!(drop as usize, drop_values.len());
+            assert_eq!(keep as usize, keep_values.len());
+            mem_op_from_stack_only_step(
+                eid, mmid,
+                VarType::I32, VarType::I32,
+                drop_values.iter().map(|value|*value).collect::<Vec<_>>()[..].try_into().unwrap(),
+                keep_values.iter().map(|value| *value).collect::<Vec<_>>()[..].try_into().unwrap(),
+            )
+        },
         RunInstructionTraceStep::Call { index } => todo!(),
         RunInstructionTraceStep::GetLocal { depth, value } => {
             vec![
@@ -28,13 +39,13 @@ pub fn memory_event_of_step(event: &Event) -> Vec<MemoryEvent> {
             ]
         }
         RunInstructionTraceStep::I32Const { value } => {
-            mem_op_from_stack_only_step::<0, 1>(eid, mmid, VarType::I32, VarType::I32, &[], &[value as u64])
+            mem_op_from_stack_only_step(eid, mmid, VarType::I32, VarType::I32, &[], &[value as u64])
         }
         RunInstructionTraceStep::I32BinOp { left, right, value } => {
-            mem_op_from_stack_only_step::<2, 1>(eid, mmid, VarType::I32, VarType::I32, &[right as u64, left as u64], &[value as u64])
+            mem_op_from_stack_only_step(eid, mmid, VarType::I32, VarType::I32, &[right as u64, left as u64], &[value as u64])
         }
         RunInstructionTraceStep::I32Comp { left, right, value } => {
-            mem_op_from_stack_only_step::<2, 1>(eid, mmid, VarType::I32, VarType::I32, &[right as u64, left as u64], &[value as u64])
+            mem_op_from_stack_only_step(eid, mmid, VarType::I32, VarType::I32, &[right as u64, left as u64], &[value as u64])
         }
     }
 }
