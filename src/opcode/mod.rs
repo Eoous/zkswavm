@@ -10,7 +10,9 @@ pub fn memory_event_of_step(event: &Event) -> Vec<MemoryEvent> {
     let mmid = event.instruction.mmid.into();
 
     match event.step_info {
-        RunInstructionTraceStep::BrIfNez { value, dst_pc } => todo!(),
+        RunInstructionTraceStep::BrIfNez { value, dst_pc } => {
+            mem_op_from_stack_only_step(eid, mmid, VarType::I32, VarType::I32, &[value as u64], &[])
+        },
         RunInstructionTraceStep::Return { drop, keep} => {
             let drop_values: [u64;0] = [];
             let keep_values: [u64;0] = [];
@@ -23,7 +25,9 @@ pub fn memory_event_of_step(event: &Event) -> Vec<MemoryEvent> {
                 keep_values.iter().map(|value| *value).collect::<Vec<_>>()[..].try_into().unwrap(),
             )
         },
-        RunInstructionTraceStep::Call { index } => todo!(),
+        RunInstructionTraceStep::Call { index } => {
+            vec![]
+        },
         RunInstructionTraceStep::GetLocal { depth, value } => {
             vec![
                 MemoryEvent::new(
