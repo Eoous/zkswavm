@@ -89,11 +89,14 @@ impl<F: FieldExt> EventConfig<F> {
         let mut opcode_bitmaps: Vec<Column<Advice>> = vec![];
         for bit in opcode_bitmaps.iter() {
             meta.create_gate("opcode_bitmaps asssert bit", |meta| {
+                // bit * (bit - 1)
+                // bit == 0 || bit == 1
                 vec![cur!(meta, bit.clone()) * (cur!(meta, bit.clone()) - constant_from!(1u64))]
             });
         }
 
         meta.create_gate("opcode_bitmaps pick one", |meta| {
+            // sum(bits) - 1 == 0
             vec![
                 opcode_bitmaps
                     .iter()
@@ -104,6 +107,7 @@ impl<F: FieldExt> EventConfig<F> {
         });
 
         meta.create_gate("eid increase", |meta| {
+            // eid.cur - eid.pre - 1 == 0
             vec![
                 cur!(meta, common_config.enable)
                     * (cur!(meta, common_config.eid) - pre!(meta, common_config.eid) - constant_from!(1u64))
