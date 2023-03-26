@@ -1,12 +1,15 @@
 use std::marker::PhantomData;
 use halo2_proofs::arithmetic::FieldExt;
-use halo2_proofs::circuit::Value;
-use halo2_proofs::plonk::{Column, Error, Fixed};
+use halo2_proofs::circuit::{Layouter, Value};
+use halo2_proofs::plonk::{Column, ConstraintSystem, Error, Expression, Fixed, TableColumn, VirtualCells};
 use num_bigint::BigUint;
-use num_traits::Zero;
+use num_traits::{One, Zero};
 use wasmi::tracer::itable::IEntry;
 
 use crate::utils::{bn_to_field, Context};
+use crate::{
+  constant
+};
 
 pub struct Instruction {
     moid: u16,
@@ -30,18 +33,15 @@ impl Instruction {
 
     pub fn encode_addr(&self) -> BigUint {
         let mut bn = BigUint::zero();
-        bn <<= 16u8;
         bn += self.moid;
         bn <<= 16u8;
-        bn <<= self.mmid;
+        bn += self.mmid;
         bn <<= 16u8;
         bn += self.fid;
         bn <<= 16u8;
         bn += self.bid;
         bn <<= 16u8;
         bn += self.iid;
-        bn <<= 64u8;
-        bn += self.opcode;
         bn
     }
 }
@@ -60,35 +60,62 @@ impl From<IEntry> for Instruction {
     }
 }
 
-pub struct InstructionConfig {
-    col: Column<Fixed>,
+pub fn encode_inst_expr<F: FieldExt>(
+    moid: Expression<F>,
+    mmid: Expression<F>,
+    fid: Expression<F>,
+    bid: Expression<F>,
+    iid: Expression<F>,
+    opcode: Expression<F>,
+) -> Expression<F> {
+    let mut bn = BigUint::one();
+    let mut acc = opcode;
+    bn <<= 64u8;
+    acc = acc + iid * constant!(bn_to_field(&bn));
+    bn <<= 16u8;
+    acc = acc + bid * constant!(bn_to_field(&bn));
+    bn <<= 16u8;
+    acc = acc + fid * constant!(bn_to_field(&bn));
+    bn <<= 16u8;
+    acc = acc + mmid * constant!(bn_to_field(&bn));
+    bn <<= 16u8;
+    acc = acc + moid * constant!(bn_to_field(&bn));
+
+    acc
 }
 
-impl InstructionConfig {
-    fn new(col: Column<Fixed>) -> InstructionConfig {
-        InstructionConfig {
-            col
-        }
+pub struct InstructionConfig<F: FieldExt> {
+    col: TableColumn,
+    _mark: PhantomData<F>,
+}
+
+impl<F: FieldExt> InstructionConfig<F> {
+    pub fn configure_in_table(&self, meta: &mut ConstraintSystem<F>, expr: impl FnOnce(&mut VirtualCells<'_, F>) -> Expression<F>) {
+        meta.lookup(|meta| vec![(expr(meta), self.col)]);
     }
 }
 
 pub struct InstructionChip<F: FieldExt> {
-    config: InstructionConfig,
-    _phantom: PhantomData<F>,
+    config: InstructionConfig<F>,
 }
 
 impl<F: FieldExt> InstructionChip<F> {
-    pub fn add_inst(&self, ctx: &mut Context<'_, F>, inst: Instruction) -> Result<(), Error> {
-        let value: Value<F>= Value::known(bn_to_field(&inst.encode()));
+    pub fn add_inst(&self, layouter: &mut impl Layouter<F>, insts: Vec<Instruction>) -> Result<(), Error> {
+        layouter.assign_table(
+            || "init instructions",
+            |mut table| {
+                for(i, v) in insts.iter().enumerate() {
+                    table.assign_cell(
+                        || "init instruction table",
+                        self.config.col,
+                        i,
+                        || Value::known(bn_to_field::<F>(&v.encode())),
+                    )?;
+                }
 
-        ctx.region.assign_fixed(
-            || "instruction table",
-            self.config.col,
-            ctx.offset,
-            //|| Value::<F>::known(bn_to_field(&inst.encode())),
-            || value.clone()
+                Ok(())
+            },
         )?;
-        ctx.offset += 1;
 
         Ok(())
     }
