@@ -31,15 +31,15 @@ impl<F: FieldExt> EventOpcodeConfigBuilder<F> for LocalGetConfigBuilder {
         common: &EventCommonConfig,
         opcode_bit: Column<Advice>,
         cols: &mut impl Iterator<Item = Column<Advice>>,
-        itable: &InstructionConfig<F>,
-        mtable: &MemoryConfig<F>,
-        jtable: &JumpConfig<F>,
+        instruction_table: &InstructionConfig<F>,
+        memory_table: &MemoryConfig<F>,
+        jump_table: &JumpConfig<F>,
     ) -> Box<dyn EventOpcodeConfig<F>> {
         let offset = cols.next().unwrap();
         let value = cols.next().unwrap();
         let vtype = cols.next().unwrap();
 
-        mtable.configure_stack_read_in_table(
+        memory_table.configure_stack_read_in_table(
             "local get mlookup",
             "local get mlookup rev",
             meta,
@@ -51,7 +51,7 @@ impl<F: FieldExt> EventOpcodeConfigBuilder<F> for LocalGetConfigBuilder {
             |meta| cur!(meta, value),
         );
 
-        mtable.configure_stack_write_in_table(
+        memory_table.configure_stack_write_in_table(
             "local get mlookup",
             "local get mlookup rev",
             meta,

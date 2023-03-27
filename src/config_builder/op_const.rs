@@ -31,14 +31,14 @@ impl<F: FieldExt> EventOpcodeConfigBuilder<F> for ConstConfigBuilder {
         common: &EventCommonConfig,
         opcode_bit: Column<Advice>,
         cols: &mut impl Iterator<Item = Column<Advice>>,
-        itable: &InstructionConfig<F>,
-        mtable: &MemoryConfig<F>,
-        jtable: &JumpConfig<F>,
+        instruction_table: &InstructionConfig<F>,
+        memory_table: &MemoryConfig<F>,
+        jump_table: &JumpConfig<F>,
     ) -> Box<dyn EventOpcodeConfig<F>> {
         let value = cols.next().unwrap();
         let vtype = cols.next().unwrap();
 
-        mtable.configure_stack_write_in_table(
+        memory_table.configure_stack_write_in_table(
             "const mlookup",
             "const mlookup rev",
             meta,
@@ -61,7 +61,6 @@ impl<F: FieldExt> EventOpcodeConfigBuilder<F> for ConstConfigBuilder {
 
 impl<F: FieldExt> EventOpcodeConfig<F> for ConstConfig<F> {
     fn opcode(&self, meta: &mut VirtualCells<'_, F>) -> Expression<F> {
-        // FIXME
         (constant!(bn_to_field(
             &(BigUint::from(Opcode::Const as u64) << (64 + 13))
         )) + cur!(meta, self.vtype) * constant!(bn_to_field(&(BigUint::from(1u64) << (64 + 13))))

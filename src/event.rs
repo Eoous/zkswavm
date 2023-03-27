@@ -109,6 +109,7 @@ impl<F: FieldExt> EventConfig<F> {
                 memory_table,
                 jump_table,
             );
+
             configs.push(config);
         }
 
@@ -117,6 +118,7 @@ impl<F: FieldExt> EventConfig<F> {
             for config in configs.iter() {
                 acc = acc + config.opcode(meta);
             }
+
             vec![cur!(meta, opcode) - acc]
         });
 
@@ -125,6 +127,7 @@ impl<F: FieldExt> EventConfig<F> {
             for config in configs.iter() {
                 acc = acc + config.sp_diff(meta);
             }
+
             vec![cur!(meta, sp) + acc - next!(meta, sp)]
         });
 
