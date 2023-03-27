@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 use halo2_proofs::arithmetic::FieldExt;
-use halo2_proofs::circuit::{Layouter, Value};
+use halo2_proofs::circuit::{Layouter};
 use halo2_proofs::plonk::{ConstraintSystem, Error, Expression, TableColumn, VirtualCells};
 
 pub struct RangeConfig<F: FieldExt> {
@@ -19,9 +19,10 @@ impl<F: FieldExt> RangeConfig<F> {
     pub fn configure_in_range(
         &self,
         meta: &mut ConstraintSystem<F>,
+        key: &'static str,
         expr: impl FnOnce(&mut VirtualCells<'_, F>) -> Expression<F>,
     ) {
-        meta.lookup(|meta| vec![(expr(meta), self.cols[0])]);
+        meta.lookup(key, |meta| vec![(expr(meta), self.cols[0])]);
     }
 }
 
@@ -47,7 +48,7 @@ impl<F: FieldExt> RangeChip<F> {
                         || "range table",
                         self.config.cols[0],
                         i,
-                        || Value::known(F::from(i as u64)),
+                        || Ok(F::from(i as u64)),
                     )?;
                 }
 

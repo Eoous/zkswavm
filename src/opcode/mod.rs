@@ -5,6 +5,11 @@ use crate::opcode::stack_only::mem_op_from_stack_only_step;
 
 pub(crate) mod stack_only;
 
+pub enum Opcode {
+    LocalGet = 1isize,
+    Const = 2isize,
+}
+
 pub fn memory_event_of_step(event: &Event) -> Vec<MemoryEvent> {
     let eid = event.eid;
     let mmid = event.instruction.mmid.into();

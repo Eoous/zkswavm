@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 use halo2_proofs::arithmetic::FieldExt;
-use halo2_proofs::circuit::{Layouter, Value};
+use halo2_proofs::circuit::{Layouter};
 use halo2_proofs::plonk::{Column, ConstraintSystem, Error, Expression, Fixed, TableColumn, VirtualCells};
 use num_bigint::BigUint;
 use num_traits::{One, Zero};
@@ -90,8 +90,8 @@ pub struct InstructionConfig<F: FieldExt> {
 }
 
 impl<F: FieldExt> InstructionConfig<F> {
-    pub fn configure_in_table(&self, meta: &mut ConstraintSystem<F>, expr: impl FnOnce(&mut VirtualCells<'_, F>) -> Expression<F>) {
-        meta.lookup(|meta| vec![(expr(meta), self.col)]);
+    pub fn configure_in_table(&self, meta: &mut ConstraintSystem<F>, key: &'static str, expr: impl FnOnce(&mut VirtualCells<'_, F>) -> Expression<F>) {
+        meta.lookup(key, |meta| vec![(expr(meta), self.col)]);
     }
 }
 
@@ -109,7 +109,7 @@ impl<F: FieldExt> InstructionChip<F> {
                         || "init instruction table",
                         self.config.col,
                         i,
-                        || Value::known(bn_to_field::<F>(&v.encode())),
+                        || Ok(bn_to_field::<F>(&v.encode())),
                     )?;
                 }
 

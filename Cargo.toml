@@ -6,10 +6,12 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-halo2_proofs = "0.2.0"
+halo2_proofs = { git = "https://github.com/0xEclair/halo2", rev = "4112958c7fa980b331897fd030a329095f418ff9", default-features = true }
 num-integer = "0.1.45"
 rand = "0.8"
 num-bigint = { version = "0.4", features = ["rand"] }
 num-traits = "0.2.15"
+
+lazy_static = "1.4.0"
 
 wasmi = { git = "https://github.com/DelphinusLab/wasmi", rev = "b5155dd70bfc9b594695f2fb45ba136c2637ef4f" }

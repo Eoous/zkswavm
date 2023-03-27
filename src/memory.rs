@@ -2,17 +2,20 @@ use std::marker::PhantomData;
 use halo2_proofs::arithmetic::FieldExt;
 use halo2_proofs::plonk::{Advice, Column, ConstraintSystem, Expression, VirtualCells};
 use halo2_proofs::poly::Rotation;
+use num_bigint::BigUint;
+use lazy_static::lazy_static;
 
 use crate::memory_init::MemoryInitConfig;
 use crate::range::RangeConfig;
 use crate::row_diff::RowDiffConfig;
 use crate::{
-    cur, pre, next
+    cur, pre, next, constant, constant_from
 };
+use crate::utils::bn_to_field;
 
 pub enum LocationType {
-    Heap,
-    Stack,
+    Heap = 0,
+    Stack = 1,
 }
 
 impl<F: FieldExt> Into<Expression<F>> for LocationType {
@@ -25,9 +28,9 @@ impl<F: FieldExt> Into<Expression<F>> for LocationType {
 }
 
 pub enum AccessType {
-    Read,
-    Write,
-    Init,
+    Read = 1,
+    Write = 2,
+    Init = 3,
 }
 
 impl<F: FieldExt> Into<Expression<F>> for AccessType {
@@ -42,7 +45,7 @@ impl<F: FieldExt> Into<Expression<F>> for AccessType {
 
 #[derive(Clone, Copy)]
 pub enum VarType {
-    U8,
+    U8 = 1,
     I32
 }
 
@@ -74,13 +77,23 @@ impl MemoryEvent {
     }
 }
 
+lazy_static! {
+    static ref VAR_TYPE_SHIFT: BigUint = BigUint::from(1u64) << 64;
+    static ref ACCESS_TYPE_SHIFT: BigUint = BigUint::from(1u64) << 77;
+    static ref LOC_TYPE_SHIFT: BigUint = BigUint::from(1u64) << 79;
+    static ref OFFSET_SHIFT: BigUint = BigUint::from(1u64) << 80;
+    static ref MMID_SHIFT: BigUint = BigUint::from(1u64) << 96;
+    static ref EMID_SHIFT: BigUint = BigUint::from(1u64) << 112;
+    static ref EID_SHIFT: BigUint = BigUint::from(1u64) << 128;
+}
+
 pub struct MemoryConfig<F: FieldExt> {
-    ltype: RowDiffConfig<F>,
+    eid: RowDiffConfig<F>,
+    emid: Column<Advice>,
     mmid: RowDiffConfig<F>,
     offset: RowDiffConfig<F>,
-    eid: RowDiffConfig<F>,
 
-    emid: Column<Advice>,
+    ltype: RowDiffConfig<F>,
     atype: Column<Advice>,
     vtype: Column<Advice>,
     value: Column<Advice>,
@@ -111,6 +124,107 @@ impl<F: FieldExt> MemoryConfig<F> {
             emid, atype, vtype, value, enable, same_location,
             _mark: PhantomData,
         }
+    }
+
+    fn encode_for_lookup(&self, meta: &mut VirtualCells<'_, F>) -> Expression<F> {
+        self.eid.data(meta) * constant!(bn_to_field(&EID_SHIFT))
+            + cur!(meta, self.emid) * constant!(bn_to_field(&EMID_SHIFT))
+            + self.mmid.data(meta) * constant!(bn_to_field(&MMID_SHIFT))
+            + self.offset.data(meta) * constant!(bn_to_field(&OFFSET_SHIFT))
+            + self.ltype.data(meta) * constant!(bn_to_field(&LOC_TYPE_SHIFT))
+            + cur!(meta, self.atype) * constant!(bn_to_field(&ACCESS_TYPE_SHIFT))
+            + cur!(meta, self.vtype) * constant!(bn_to_field(&VAR_TYPE_SHIFT))
+            + cur!(meta, self.value)
+    }
+
+    pub fn configure_stack_read_in_table(
+        &self,
+        key: &'static str,
+        key_rev: &'static str,
+        meta: &mut ConstraintSystem<F>,
+        enable: impl Fn(&mut VirtualCells<'_, F>) -> Expression<F>,
+        eid: impl Fn(&mut VirtualCells<'_, F>) -> Expression<F>,
+        emid: impl Fn(&mut VirtualCells<'_, F>) -> Expression<F>,
+        sp: impl Fn(&mut VirtualCells<'_, F>) -> Expression<F>,
+        vtype: impl Fn(&mut VirtualCells<'_, F>) -> Expression<F>,
+        value: impl Fn(&mut VirtualCells<'_, F>) -> Expression<F>,
+    ) {
+        meta.lookup_any(key, |meta| {
+            vec![(
+                (eid(meta) * constant!(bn_to_field(&EID_SHIFT))
+                    + emid(meta) * constant!(bn_to_field(&EMID_SHIFT))
+                    + sp(meta) * constant!(bn_to_field(&OFFSET_SHIFT))
+                    + constant!(bn_to_field(&LOC_TYPE_SHIFT))
+                    * constant_from!(LocationType::Stack as u64)
+                    + constant!(bn_to_field(&ACCESS_TYPE_SHIFT))
+                    * constant_from!(AccessType::Write as u64)
+                    + vtype(meta) * constant!(bn_to_field(&VAR_TYPE_SHIFT))
+                    + value(meta))
+                    * enable(meta),
+                self.encode_for_lookup(meta) * enable(meta),
+            )]
+        });
+
+        meta.lookup_any(key_rev, |meta| {
+            vec![(
+                self.encode_for_lookup(meta) * enable(meta),
+                (eid(meta) * constant!(bn_to_field(&EID_SHIFT))
+                    + emid(meta) * constant!(bn_to_field(&EMID_SHIFT))
+                    + sp(meta) * constant!(bn_to_field(&OFFSET_SHIFT))
+                    + constant!(bn_to_field(&LOC_TYPE_SHIFT))
+                    * constant_from!(LocationType::Stack as u64)
+                    + constant!(bn_to_field(&ACCESS_TYPE_SHIFT))
+                    * constant_from!(AccessType::Read as u64)
+                    + vtype(meta) * constant!(bn_to_field(&VAR_TYPE_SHIFT))
+                    + value(meta))
+                    * enable(meta),
+            )]
+        });
+    }
+
+    pub fn configure_stack_write_in_table(
+        &self,
+        key: &'static str,
+        key_rev: &'static str,
+        meta: &mut ConstraintSystem<F>,
+        enable: impl Fn(&mut VirtualCells<'_, F>) -> Expression<F>,
+        eid: impl Fn(&mut VirtualCells<'_, F>) -> Expression<F>,
+        emid: impl Fn(&mut VirtualCells<'_, F>) -> Expression<F>,
+        sp: impl Fn(&mut VirtualCells<'_, F>) -> Expression<F>,
+        vtype: impl Fn(&mut VirtualCells<'_, F>) -> Expression<F>,
+        value: impl Fn(&mut VirtualCells<'_, F>) -> Expression<F>,
+    ) {
+        meta.lookup_any(key, |meta| {
+            vec![(
+                (eid(meta) * constant!(bn_to_field(&EID_SHIFT))
+                    + emid(meta) * constant!(bn_to_field(&EMID_SHIFT))
+                    + sp(meta) * constant!(bn_to_field(&OFFSET_SHIFT))
+                    + constant!(bn_to_field(&LOC_TYPE_SHIFT))
+                    * constant_from!(LocationType::Stack as u64)
+                    + constant!(bn_to_field(&ACCESS_TYPE_SHIFT))
+                    * constant_from!(AccessType::Write as u64)
+                    + vtype(meta) * constant!(bn_to_field(&VAR_TYPE_SHIFT))
+                    + value(meta))
+                    * enable(meta),
+                self.encode_for_lookup(meta) * enable(meta),
+            )]
+        });
+
+        meta.lookup_any(key_rev, |meta| {
+            vec![(
+                self.encode_for_lookup(meta) * enable(meta),
+                (eid(meta) * constant!(bn_to_field(&EID_SHIFT))
+                    + emid(meta) * constant!(bn_to_field(&EMID_SHIFT))
+                    + sp(meta) * constant!(bn_to_field(&OFFSET_SHIFT))
+                    + constant!(bn_to_field(&LOC_TYPE_SHIFT))
+                    * constant_from!(LocationType::Stack as u64)
+                    + constant!(bn_to_field(&ACCESS_TYPE_SHIFT))
+                    * constant_from!(AccessType::Read as u64)
+                    + vtype(meta) * constant!(bn_to_field(&VAR_TYPE_SHIFT))
+                    + value(meta))
+                    * enable(meta),
+            )]
+        });
     }
 
     pub fn configure(
@@ -171,30 +285,30 @@ impl<F: FieldExt> MemoryConfig<F> {
     }
 
     fn configure_range(&self, meta: &mut ConstraintSystem<F>, range: &RangeConfig<F>) -> &MemoryConfig<F> {
-        range.configure_in_range(meta, |meta| self.mmid.data(meta));
-        range.configure_in_range(meta, |meta| self.offset.data(meta));
-        range.configure_in_range(meta, |meta| self.eid.data(meta));
+        range.configure_in_range(meta, "mmid in range", |meta| self.mmid.data(meta));
+        range.configure_in_range(meta, "offset in range", |meta| self.offset.data(meta));
+        range.configure_in_range(meta, "eid in range", |meta| self.eid.data(meta));
 
-        range.configure_in_range(meta, |meta| cur!(meta, self.emid));
-        range.configure_in_range(meta, |meta| cur!(meta, self.vtype));
+        range.configure_in_range(meta, "emid in range", |meta| cur!(meta, self.emid));
+        range.configure_in_range(meta, "vtype in range", |meta| cur!(meta, self.vtype));
 
         self
     }
 
     fn configure_sort(&self, meta: &mut ConstraintSystem<F>, range: &RangeConfig<F>) -> &MemoryConfig<F> {
-        range.configure_in_range(meta, |meta| {
+        range.configure_in_range(meta, "ltype sort", |meta| {
             self.is_enable(meta) * self.ltype.diff(meta)
         });
-        range.configure_in_range(meta, |meta| {
+        range.configure_in_range(meta, "mmid sort", |meta| {
             self.is_enable(meta) * self.ltype.is_same(meta) * self.mmid.diff(meta)
         });
-        range.configure_in_range(meta, |meta| {
+        range.configure_in_range(meta, "offset sort",|meta| {
             self.is_enable(meta) * self.ltype.is_same(meta) * self.mmid.is_same(meta) * self.offset.is_same(meta)
         });
-        range.configure_in_range(meta, |meta| {
+        range.configure_in_range(meta, "eid sort", |meta| {
             self.is_enable(meta) * self.is_same_location(meta) * self.eid.diff(meta)
         });
-        range.configure_in_range(meta, |meta| {
+        range.configure_in_range(meta, "emid sort", |meta| {
             self.is_enable(meta)
                 * self.is_same_location(meta)
                 * self.eid.is_same(meta)
@@ -222,7 +336,7 @@ impl<F: FieldExt> MemoryConfig<F> {
         });
 
         // first line in heap
-        memory_init.configure_in_range(meta, |meta| {
+        memory_init.configure_in_table(meta, "heap first line", |meta| {
             self.is_enable(meta)
                 * (Expression::Constant(F::one()) - self.is_same_location(meta))
                 * self.is_heap(meta)

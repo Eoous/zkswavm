@@ -1,12 +1,15 @@
 use std::marker::PhantomData;
 use halo2_proofs::arithmetic::FieldExt;
-use halo2_proofs::plonk::{Advice, Column, ConstraintSystem, Expression};
+use halo2_proofs::plonk::{Advice, Column, ConstraintSystem, Expression, VirtualCells};
 use wasmi::tracer::etable::{EEntry, RunInstructionTraceStep};
 
 use crate::instruction::{encode_inst_expr, Instruction, InstructionConfig};
 use crate::{
-    cur, pre, constant, constant_from
+    cur, pre, next, constant, constant_from
 };
+use crate::jump::JumpConfig;
+use crate::memory::MemoryConfig;
+use crate::config_builder::op_const::ConstConfigBuilder;
 
 pub struct Event {
     pub(crate) eid: u64,
@@ -33,24 +36,28 @@ pub trait EventOpcodeConfigBuilder<F: FieldExt> {
         meta: &mut ConstraintSystem<F>,
         common: &EventCommonConfig,
         opcode_bit: Column<Advice>,
-        cols: &mut impl Iterator<Item = Column<Advice>>
-    ) -> Self;
+        cols: &mut impl Iterator<Item = Column<Advice>>,
+        itable: &InstructionConfig<F>,
+        mtable: &MemoryConfig<F>,
+        jtable: &JumpConfig<F>,
+    ) -> Box<dyn EventOpcodeConfig<F>>;
 }
 
 pub trait EventOpcodeConfig<F: FieldExt> {
-    fn opcode(&self) -> Expression<F>;
+    fn opcode(&self, meta: &mut VirtualCells<'_, F>) -> Expression<F>;
+    fn sp_diff(&self, meta: &mut VirtualCells<'_, F>) -> Expression<F>;
 }
 
 pub struct EventCommonConfig {
-    enable: Column<Advice>,
-    eid: Column<Advice>,
-    moid: Column<Advice>,
-    fid: Column<Advice>,
-    bid: Column<Advice>,
-    iid: Column<Advice>,
-    mmid: Column<Advice>,
-    sp: Column<Advice>,
-    opcode: Column<Advice>,
+    pub enable: Column<Advice>,
+    pub eid: Column<Advice>,
+    pub moid: Column<Advice>,
+    pub fid: Column<Advice>,
+    pub bid: Column<Advice>,
+    pub iid: Column<Advice>,
+    pub mmid: Column<Advice>,
+    pub sp: Column<Advice>,
+    pub opcode: Column<Advice>,
 }
 
 pub struct EventConfig<F: FieldExt> {
@@ -64,6 +71,8 @@ impl<F: FieldExt> EventConfig<F> {
         meta: &mut ConstraintSystem<F>,
         cols: &mut impl Iterator<Item = Column<Advice>>,
         inst_config: &InstructionConfig<F>,
+        memory_table: &MemoryConfig<F>,
+        jump_table: &JumpConfig<F>,
     ) -> EventConfig<F> {
         let enable = cols.next().unwrap();
         let eid = cols.next().unwrap();
@@ -87,6 +96,38 @@ impl<F: FieldExt> EventConfig<F> {
         };
 
         let mut opcode_bitmaps: Vec<Column<Advice>> = vec![];
+        let mut opcode_bitmaps_iter = opcode_bitmaps.iter();
+        let mut configs: Vec<Box<dyn EventOpcodeConfig<F>>> = vec![];
+        {
+            let opcode_bit = opcode_bitmaps_iter.next().unwrap();
+            let config = ConstConfigBuilder::configure(
+                meta,
+                &common_config,
+                opcode_bit.clone(),
+                cols,
+                inst_config,
+                memory_table,
+                jump_table,
+            );
+            configs.push(config);
+        }
+
+        meta.create_gate("opcode consistent", |meta| {
+            let mut acc = constant_from!(0u64);
+            for config in configs.iter() {
+                acc = acc + config.opcode(meta);
+            }
+            vec![cur!(meta, opcode) - acc]
+        });
+
+        meta.create_gate("sp diff consistent", |meta| {
+            let mut acc = constant_from!(0u64);
+            for config in configs.iter() {
+                acc = acc + config.sp_diff(meta);
+            }
+            vec![cur!(meta, sp) + acc - next!(meta, sp)]
+        });
+
         for bit in opcode_bitmaps.iter() {
             meta.create_gate("opcode_bitmaps asssert bit", |meta| {
                 // bit * (bit - 1)
@@ -114,7 +155,7 @@ impl<F: FieldExt> EventConfig<F> {
             ]
         });
 
-        inst_config.configure_in_table(meta, |meta| {
+        inst_config.configure_in_table(meta, "instruction in table", |meta| {
             cur!(meta, enable)
                 * encode_inst_expr(
                 cur!(meta, common_config.moid),

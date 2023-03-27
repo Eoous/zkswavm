@@ -1,6 +1,7 @@
 use std::marker::PhantomData;
 use halo2_proofs::arithmetic::FieldExt;
 use halo2_proofs::plonk::{Advice, Column, Error};
+use num_bigint::BigUint;
 
 use crate::instruction::Instruction;
 use crate::utils::{bn_to_field, Context};
@@ -11,25 +12,33 @@ pub struct Jump {
     instruction: Box<Instruction>,
 }
 
-pub struct JumpConfig {
-    cols: [Column<Advice>; 3],
+impl Jump {
+    pub fn encode(&self) -> BigUint {
+        todo!()
+    }
 }
 
-impl JumpConfig {
-    fn new(cols: [Column<Advice>; 3]) -> JumpConfig {
+pub struct JumpConfig<F: FieldExt> {
+    col: Column<Advice>,
+    _mark: PhantomData<F>,
+}
+
+impl<F: FieldExt> JumpConfig<F> {
+    pub fn new(cols: &mut impl Iterator<Item = Column<Advice>>) -> JumpConfig<F> {
         JumpConfig {
-            cols
+            col: cols.next().unwrap(),
+            _mark: PhantomData,
         }
     }
 }
 
 pub struct JumpChip<F: FieldExt> {
-    config: JumpConfig,
+    config: JumpConfig<F>,
     _phantom: PhantomData<F>,
 }
 
 impl<F: FieldExt> JumpChip<F> {
-    pub fn new(config: JumpConfig) -> JumpChip<F> {
+    pub fn new(config: JumpConfig<F>) -> JumpChip<F> {
         JumpChip {
             config,
             _phantom: PhantomData,
@@ -38,22 +47,10 @@ impl<F: FieldExt> JumpChip<F> {
 
     pub fn add_jump(&self, ctx: &mut Context<'_, F>, jump: Box<Jump>) -> Result<(), Error> {
         ctx.region.assign_advice_from_constant(
-            || "jump eid",
-            self.config.cols[0],
+            || "jump table entry",
+            self.config.col,
             ctx.offset,
-            F::from(jump.eid),
-        )?;
-        ctx.region.assign_advice_from_constant(
-            || "jump last_jump_eid",
-            self.config.cols[1],
-            ctx.offset,
-            F::from(jump.last_jump_eid),
-        )?;
-        ctx.region.assign_advice_from_constant(
-            || "jump addr",
-            self.config.cols[2],
-            ctx.offset,
-            bn_to_field::<F>(&jump.instruction.encode_addr()),
+            bn_to_field(&jump.encode()),
         )?;
 
         Ok(())

@@ -1,0 +1,84 @@
+use std::marker::PhantomData;
+use halo2_proofs::{
+    arithmetic::FieldExt,
+    plonk::{Advice, Column, ConstraintSystem, Expression, VirtualCells},
+};
+use num_bigint::BigUint;
+
+use crate::{
+    constant, constant_from, cur,
+    event::{EventOpcodeConfig, EventOpcodeConfigBuilder},
+    instruction::InstructionConfig,
+    jump::JumpConfig,
+    memory::MemoryConfig,
+    opcode::Opcode,
+    utils::bn_to_field,
+};
+use crate::event::EventCommonConfig;
+
+pub struct LocalGetConfig<F: FieldExt> {
+    offset: Column<Advice>,
+    vtype: Column<Advice>,
+    value: Column<Advice>,
+    _mark: PhantomData<F>,
+}
+
+pub struct LocalGetConfigBuilder {}
+
+impl<F: FieldExt> EventOpcodeConfigBuilder<F> for LocalGetConfigBuilder {
+    fn configure(
+        meta: &mut ConstraintSystem<F>,
+        common: &EventCommonConfig,
+        opcode_bit: Column<Advice>,
+        cols: &mut impl Iterator<Item = Column<Advice>>,
+        itable: &InstructionConfig<F>,
+        mtable: &MemoryConfig<F>,
+        jtable: &JumpConfig<F>,
+    ) -> Box<dyn EventOpcodeConfig<F>> {
+        let offset = cols.next().unwrap();
+        let value = cols.next().unwrap();
+        let vtype = cols.next().unwrap();
+
+        mtable.configure_stack_read_in_table(
+            "local get mlookup",
+            "local get mlookup rev",
+            meta,
+            |meta| cur!(meta, opcode_bit),
+            |meta| cur!(meta, common.eid),
+            |meta| constant_from!(1u64),
+            |meta| cur!(meta, common.sp),
+            |meta| cur!(meta, vtype),
+            |meta| cur!(meta, value),
+        );
+
+        mtable.configure_stack_write_in_table(
+            "local get mlookup",
+            "local get mlookup rev",
+            meta,
+            |meta| cur!(meta, opcode_bit),
+            |meta| cur!(meta, common.eid),
+            |meta| constant_from!(2u64),
+            |meta| cur!(meta, common.sp),
+            |meta| cur!(meta, vtype),
+            |meta| cur!(meta, value),
+        );
+
+        Box::new(LocalGetConfig {
+            offset,
+            value,
+            vtype,
+            _mark: PhantomData,
+        })
+    }
+}
+
+impl<F: FieldExt> EventOpcodeConfig<F> for LocalGetConfig<F> {
+    fn opcode(&self, meta: &mut VirtualCells<'_, F>) -> Expression<F> {
+        constant!(bn_to_field(&(BigUint::from(Opcode::LocalGet as u64) << 64)))
+            + cur!(meta, self.offset)
+    }
+
+    fn sp_diff(&self, meta: &mut VirtualCells<'_, F>) -> Expression<F> {
+        constant_from!(1u64)
+    }
+}

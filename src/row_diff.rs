@@ -21,6 +21,8 @@ impl<F: FieldExt> RowDiffConfig<F> {
             let inv = meta.query_advice(inv, Rotation::cur());
             let same = meta.query_advice(same, Rotation::cur());
 
+            // (cur - pre) * inv - same - 1 == 0
+            // (cur - pre) * same == 0
             vec![
                 (cur.clone() - pre.clone()) * inv.clone()
                              - same.clone()

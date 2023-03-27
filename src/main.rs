@@ -8,6 +8,7 @@ pub mod memory;
 pub mod row_diff;
 pub mod range;
 pub mod opcode;
+pub mod config_builder;
 
 fn main() {
     println!("Hello, world!");
