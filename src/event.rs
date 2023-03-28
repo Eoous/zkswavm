@@ -119,6 +119,7 @@ impl<F: FieldExt> EventConfig<F> {
                 acc = acc + config.opcode(meta);
             }
 
+            // advice.opcode - acc == 0
             vec![cur!(meta, opcode) - acc]
         });
 
@@ -128,6 +129,7 @@ impl<F: FieldExt> EventConfig<F> {
                 acc = acc + config.sp_diff(meta);
             }
 
+            // sp + sum(diff) - sp.next == 0
             vec![cur!(meta, sp) + acc - next!(meta, sp)]
         });
 

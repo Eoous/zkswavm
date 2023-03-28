@@ -61,14 +61,20 @@ impl<F: FieldExt> EventOpcodeConfigBuilder<F> for ConstConfigBuilder {
 
 impl<F: FieldExt> EventOpcodeConfig<F> for ConstConfig<F> {
     fn opcode(&self, meta: &mut VirtualCells<'_, F>) -> Expression<F> {
-        (constant!(bn_to_field(
-            &(BigUint::from(Opcode::Const as u64) << (64 + 13))
-        )) + cur!(meta, self.vtype) * constant!(bn_to_field(&(BigUint::from(1u64) << (64 + 13))))
-            + cur!(meta, self.value))
+        // [(2 + vartype) << (64+13) + value] * enable
+        // 2(10) << 77
+        (constant!(bn_to_field(&(BigUint::from(Opcode::Const as u64) << (64 + 13))))
+            // vartype * (1 << 77)
+            + cur!(meta, self.vtype) * constant!(bn_to_field(&(BigUint::from(1u64) << (64 + 13))))
+            // value
+            + cur!(meta, self.value)
+        )
             * cur!(meta, self.enable)
     }
 
     fn sp_diff(&self, meta: &mut VirtualCells<'_, F>) -> Expression<F> {
+        // 1 * enable
+        // 0 || 1
         constant_from!(1u64) * cur!(meta, self.enable)
     }
 }

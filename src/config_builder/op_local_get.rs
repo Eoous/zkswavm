@@ -74,6 +74,7 @@ impl<F: FieldExt> EventOpcodeConfigBuilder<F> for LocalGetConfigBuilder {
 
 impl<F: FieldExt> EventOpcodeConfig<F> for LocalGetConfig<F> {
     fn opcode(&self, meta: &mut VirtualCells<'_, F>) -> Expression<F> {
+        // (1 << 64) + offset
         constant!(bn_to_field(&(BigUint::from(Opcode::LocalGet as u64) << 64)))
             + cur!(meta, self.offset)
     }
