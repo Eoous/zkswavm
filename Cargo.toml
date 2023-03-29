@@ -15,3 +15,6 @@ num-traits = "0.2.15"
 lazy_static = "1.4.0"
 
 wasmi = { git = "https://github.com/DelphinusLab/wasmi", rev = "b5155dd70bfc9b594695f2fb45ba136c2637ef4f" }
+
+[dev-dependencies]
+wabt = "0.10.0"
