@@ -46,8 +46,8 @@ impl Instruction {
     }
 }
 
-impl From<IEntry> for Instruction {
-    fn from(ientry: IEntry) -> Instruction {
+impl From<&IEntry> for Instruction {
+    fn from(ientry: &IEntry) -> Instruction {
         Instruction {
             moid: ientry.module_instance_index as u16,
             mmid: ientry.module_instance_index as u16,

@@ -12,12 +12,12 @@ pub struct CircuitBuilder {
 }
 
 impl CircuitBuilder {
-    pub fn from_tracer(tracer: Tracer) -> Self {
-        let instruction_table = tracer.itable.0.into_iter().map(|ientry| {
+    pub fn from_tracer(tracer: &Tracer) -> Self {
+        let instruction_table = tracer.itable.0.iter().map(|ientry| {
             Instruction::from(ientry)
         }).collect();
 
-        let event_table: Vec<Event> = tracer.etable.0.into_iter().map(|eentry| {
+        let event_table: Vec<Event> = tracer.etable.0.iter().map(|eentry| {
             Event::from(eentry)
         }).collect();
 

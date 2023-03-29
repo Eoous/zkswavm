@@ -19,14 +19,15 @@ pub struct Event {
     pub(crate) step_info: RunInstructionTraceStep,
 }
 
-impl From<EEntry> for Event {
-    fn from(eentry:EEntry ) -> Self {
+impl From<&EEntry> for Event {
+    fn from(eentry: &EEntry) -> Self {
+        let step_info = eentry.clone();
         Event {
             eid: eentry.id,
             sp: eentry.sp,
             last_jump_eid: 0,
-            instruction: Instruction::from(eentry.inst),
-            step_info: eentry.step,
+            instruction: Instruction::from(&eentry.inst),
+            step_info: step_info.step,
         }
     }
 }
