@@ -21,13 +21,12 @@ pub struct Event {
 
 impl From<&EEntry> for Event {
     fn from(eentry: &EEntry) -> Self {
-        let step_info = eentry.clone();
         Event {
             eid: eentry.id,
             sp: eentry.sp,
             last_jump_eid: 0,
             instruction: Instruction::from(&eentry.inst),
-            step_info: step_info.step,
+            step_info: eentry.step,
         }
     }
 }

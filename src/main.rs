@@ -11,6 +11,7 @@ pub mod opcode;
 pub mod config_builder;
 
 pub mod test;
+
 fn main() {
     println!("Hello, world!");
 }

@@ -35,3 +35,17 @@ impl CircuitBuilder {
         }
     }
 }
+
+mod test {
+    use halo2_proofs::arithmetic::Field;
+
+    use crate::test::test_circuit::TestCircuit;
+
+    use super::*;
+
+    impl CircuitBuilder {
+        pub fn new_test_circuit<F: Field>(&self) -> TestCircuit<F> {
+            TestCircuit::new()
+        }
+    }
+}
