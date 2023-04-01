@@ -26,7 +26,7 @@ impl From<&EEntry> for Event {
             sp: eentry.sp,
             last_jump_eid: 0,
             instruction: Instruction::from(&eentry.inst),
-            step_info: eentry.step,
+            step_info: eentry.step.clone(),
         }
     }
 }
