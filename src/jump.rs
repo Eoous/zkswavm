@@ -18,6 +18,7 @@ impl Jump {
     }
 }
 
+#[derive(Clone)]
 pub struct JumpConfig<F: FieldExt> {
     col: Column<Advice>,
     _mark: PhantomData<F>,

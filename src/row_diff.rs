@@ -3,6 +3,7 @@ use halo2_proofs::arithmetic::FieldExt;
 use halo2_proofs::plonk::{Advice, Column, ConstraintSystem, Expression, VirtualCells};
 use halo2_proofs::poly::Rotation;
 
+#[derive(Clone)]
 pub struct RowDiffConfig<F: FieldExt> {
     data: Column<Advice>,
     same: Column<Advice>,

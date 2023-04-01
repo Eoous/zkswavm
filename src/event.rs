@@ -48,6 +48,7 @@ pub trait EventOpcodeConfig<F: FieldExt> {
     fn sp_diff(&self, meta: &mut VirtualCells<'_, F>) -> Expression<F>;
 }
 
+#[derive(Clone)]
 pub struct EventCommonConfig {
     pub enable: Column<Advice>,
     pub eid: Column<Advice>,
@@ -60,6 +61,7 @@ pub struct EventCommonConfig {
     pub opcode: Column<Advice>,
 }
 
+#[derive(Clone)]
 pub struct EventConfig<F: FieldExt> {
     opcode_bitmaps: Vec<Column<Advice>>,
     common_config: EventCommonConfig,

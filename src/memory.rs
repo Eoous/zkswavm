@@ -87,6 +87,7 @@ lazy_static! {
     static ref EID_SHIFT: BigUint = BigUint::from(1u64) << 128;
 }
 
+#[derive(Clone)]
 pub struct MemoryConfig<F: FieldExt> {
     eid: RowDiffConfig<F>,
     emid: Column<Advice>,
@@ -104,7 +105,7 @@ pub struct MemoryConfig<F: FieldExt> {
 }
 
 impl<F: FieldExt> MemoryConfig<F> {
-    fn new(
+    pub fn new(
         meta: &mut ConstraintSystem<F>,
         cols: &mut impl Iterator<Item = Column<Advice>>
     ) -> MemoryConfig<F> {

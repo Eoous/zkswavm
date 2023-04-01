@@ -84,22 +84,37 @@ pub fn encode_inst_expr<F: FieldExt>(
     acc
 }
 
+#[derive(Clone)]
 pub struct InstructionConfig<F: FieldExt> {
     col: TableColumn,
     _mark: PhantomData<F>,
 }
 
 impl<F: FieldExt> InstructionConfig<F> {
+    pub fn new(meta: &mut ConstraintSystem<F>) -> InstructionConfig<F> {
+        InstructionConfig {
+            col: meta.lookup_table_column(),
+            _mark: PhantomData,
+        }
+    }
+
     pub fn configure_in_table(&self, meta: &mut ConstraintSystem<F>, key: &'static str, expr: impl FnOnce(&mut VirtualCells<'_, F>) -> Expression<F>) {
         meta.lookup(key, |meta| vec![(expr(meta), self.col)]);
     }
 }
 
+#[derive(Clone)]
 pub struct InstructionChip<F: FieldExt> {
     config: InstructionConfig<F>,
 }
 
 impl<F: FieldExt> InstructionChip<F> {
+    pub fn new(meta: &mut ConstraintSystem<F>) -> InstructionChip<F> {
+        InstructionChip {
+            config: InstructionConfig::new(meta)
+        }
+    }
+
     pub fn add_inst(&self, layouter: &mut impl Layouter<F>, insts: Vec<Instruction>) -> Result<(), Error> {
         layouter.assign_table(
             || "init instructions",
