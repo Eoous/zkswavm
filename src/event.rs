@@ -97,7 +97,7 @@ impl<F: FieldExt> EventConfig<F> {
             opcode,
         };
 
-        let mut opcode_bitmaps: Vec<Column<Advice>> = vec![];
+        let mut opcode_bitmaps: Vec<Column<Advice>> = vec![cols.next().unwrap()];
         let mut opcode_bitmaps_iter = opcode_bitmaps.iter();
         let mut configs: Vec<Box<dyn EventOpcodeConfig<F>>> = vec![];
         {

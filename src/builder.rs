@@ -5,7 +5,7 @@ use crate::instruction::Instruction;
 use crate::memory::MemoryEvent;
 use crate::opcode::memory_event_of_step;
 
-pub(crate) const VAR_COLUMNS: usize = 28;
+pub(crate) const VAR_COLUMNS: usize = 31;
 
 pub struct CircuitBuilder {
     pub(crate) instruction_table: Vec<Instruction>,
