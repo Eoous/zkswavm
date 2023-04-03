@@ -37,12 +37,14 @@ impl<F: FieldExt> EventOpcodeConfigBuilder<F> for DropConfigBuilder {
 
 impl<F: FieldExt> EventOpcodeConfig<F> for DropConfig<F> {
     fn opcode(&self, meta: &mut VirtualCells<'_, F>) -> Expression<F> {
+        // (3 << 77) * enable.cur
         constant!(bn_to_field(
             &(BigUint::from(Opcode::Drop as u64) << (64 + 13))
         )) * cur!(meta, self.enable)
     }
 
     fn sp_diff(&self, meta: &mut VirtualCells<'_, F>) -> Expression<F> {
+        // -1 * enable.cur
         constant!(-F::one()) * cur!(meta, self.enable)
     }
 }
