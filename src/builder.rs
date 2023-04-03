@@ -7,6 +7,7 @@ use crate::opcode::memory_event_of_step;
 
 pub(crate) const VAR_COLUMNS: usize = 31;
 
+#[derive(Default, Clone)]
 pub struct CircuitBuilder {
     pub(crate) instruction_table: Vec<Instruction>,
     pub(crate) event_table: Vec<Event>,
@@ -47,7 +48,7 @@ mod test {
 
     impl CircuitBuilder {
         pub fn new_test_circuit<F: FieldExt>(&self) -> TestCircuit<F> {
-            TestCircuit::new()
+            TestCircuit::new(&self)
         }
     }
 }

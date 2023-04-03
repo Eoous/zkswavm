@@ -11,6 +11,7 @@ use crate::jump::JumpConfig;
 use crate::memory::MemoryConfig;
 use crate::config_builder::op_const::ConstConfigBuilder;
 
+#[derive(Clone)]
 pub struct Event {
     pub(crate) eid: u64,
     pub(crate) sp: u64,

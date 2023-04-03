@@ -11,6 +11,7 @@ use crate::{
   constant
 };
 
+#[derive(Clone)]
 pub struct Instruction {
     moid: u16,
     pub(crate) mmid: u16,
@@ -109,13 +110,13 @@ pub struct InstructionChip<F: FieldExt> {
 }
 
 impl<F: FieldExt> InstructionChip<F> {
-    pub fn new(meta: &mut ConstraintSystem<F>) -> InstructionChip<F> {
+    pub fn new(config: InstructionConfig<F>) -> InstructionChip<F> {
         InstructionChip {
-            config: InstructionConfig::new(meta)
+            config
         }
     }
 
-    pub fn add_inst(&self, layouter: &mut impl Layouter<F>, insts: Vec<Instruction>) -> Result<(), Error> {
+    pub fn add_inst(&self, layouter: &mut impl Layouter<F>, insts: &Vec<Instruction>) -> Result<(), Error> {
         layouter.assign_table(
             || "init instructions",
             |mut table| {

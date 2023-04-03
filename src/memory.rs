@@ -13,6 +13,7 @@ use crate::{
 };
 use crate::utils::bn_to_field;
 
+#[derive(Clone)]
 pub enum LocationType {
     Heap = 0,
     Stack = 1,
@@ -27,6 +28,7 @@ impl<F: FieldExt> Into<Expression<F>> for LocationType {
     }
 }
 
+#[derive(Clone)]
 pub enum AccessType {
     Read = 1,
     Write = 2,
@@ -49,6 +51,7 @@ pub enum VarType {
     I32
 }
 
+#[derive(Clone)]
 pub struct MemoryEvent {
     eid: u64,
     mmid: u64,
