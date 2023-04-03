@@ -8,6 +8,7 @@ pub(crate) mod stack_only;
 pub enum Opcode {
     LocalGet = 1isize,
     Const = 2isize,
+    Drop,
 }
 
 pub fn memory_event_of_step(event: &Event) -> Vec<MemoryEvent> {

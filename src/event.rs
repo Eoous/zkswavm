@@ -10,6 +10,8 @@ use crate::{
 use crate::jump::JumpConfig;
 use crate::memory::MemoryConfig;
 use crate::config_builder::op_const::ConstConfigBuilder;
+use crate::config_builder::op_drop::DropConfigBuilder;
+use crate::config_builder::op_local_get::LocalGetConfigBuilder;
 
 #[derive(Clone)]
 pub struct Event {
@@ -99,22 +101,34 @@ impl<F: FieldExt> EventConfig<F> {
         };
 
         let mut opcode_bitmaps: Vec<Column<Advice>> = vec![cols.next().unwrap()];
-        let mut opcode_bitmaps_iter = opcode_bitmaps.iter();
         let mut configs: Vec<Box<dyn EventOpcodeConfig<F>>> = vec![];
-        {
-            let opcode_bit = opcode_bitmaps_iter.next().unwrap();
-            let config = ConstConfigBuilder::configure(
-                meta,
-                &common_config,
-                opcode_bit.clone(),
-                cols,
-                inst_config,
-                memory_table,
-                jump_table,
-            );
 
-            configs.push(config);
-        }
+        macro_rules! configure [
+            ($($x:ident),*) => ({
+                $($x{}; opcode_bitmaps.push(cols.next().unwrap());)*
+
+                let mut opcode_bitmaps_iter = opcode_bitmaps.iter();
+                $(
+                    let opcode_bit = opcode_bitmaps_iter.next().unwrap();
+                    let config = $x::configure(
+                        meta,
+                        &common_config,
+                        opcode_bit.clone(),
+                        cols,
+                        inst_config,
+                        memory_table,
+                        jump_table,
+                    );
+                    configs.push(config);
+                )*
+            })
+        ];
+
+        configure![
+            ConstConfigBuilder,
+            DropConfigBuilder,
+            LocalGetConfigBuilder
+        ];
 
         meta.create_gate("opcode consistent", |meta| {
             let mut acc = constant_from!(0u64);
