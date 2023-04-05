@@ -9,6 +9,7 @@ pub mod row_diff;
 pub mod range;
 pub mod opcode;
 pub mod config_builder;
+pub mod spec;
 
 pub mod test;
 

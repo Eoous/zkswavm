@@ -1,9 +1,11 @@
 use wasmi::tracer::Tracer;
-use crate::event::Event;
 
 use crate::instruction::Instruction;
-use crate::memory::MemoryEvent;
-use crate::opcode::memory_event_of_step;
+use crate::{
+    memory::MemoryEvent,
+    opcode::memory_event_of_step,
+    spec::evnet::Event,
+};
 
 pub(crate) const VAR_COLUMNS: usize = 50;
 

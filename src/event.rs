@@ -1,9 +1,8 @@
 use std::marker::PhantomData;
 use halo2_proofs::arithmetic::FieldExt;
 use halo2_proofs::plonk::{Advice, Column, ConstraintSystem, Expression, VirtualCells};
-use wasmi::tracer::etable::{EEntry, RunInstructionTraceStep};
 
-use crate::instruction::{encode_inst_expr, Instruction, InstructionConfig};
+use crate::instruction::{encode_inst_expr, InstructionConfig};
 use crate::{
     cur, pre, next, constant, constant_from
 };
@@ -12,27 +11,6 @@ use crate::memory::MemoryConfig;
 use crate::config_builder::op_const::ConstConfigBuilder;
 use crate::config_builder::op_drop::DropConfigBuilder;
 use crate::config_builder::op_local_get::LocalGetConfigBuilder;
-
-#[derive(Clone)]
-pub struct Event {
-    pub(crate) eid: u64,
-    pub(crate) sp: u64,
-    pub(crate) last_jump_eid: u64,
-    pub(crate) instruction: Instruction,
-    pub(crate) step_info: RunInstructionTraceStep,
-}
-
-impl From<&EEntry> for Event {
-    fn from(eentry: &EEntry) -> Self {
-        Event {
-            eid: eentry.id,
-            sp: eentry.sp,
-            last_jump_eid: 0,
-            instruction: Instruction::from(&eentry.inst),
-            step_info: eentry.step.clone(),
-        }
-    }
-}
 
 pub trait EventOpcodeConfigBuilder<F: FieldExt> {
     fn configure(

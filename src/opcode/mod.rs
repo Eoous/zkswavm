@@ -1,7 +1,8 @@
 use wasmi::tracer::etable::RunInstructionTraceStep;
-use crate::event::Event;
+
 use crate::memory::{AccessType, LocationType, MemoryEvent, VarType};
 use crate::opcode::stack_only::mem_op_from_stack_only_step;
+use crate::spec::evnet::Event;
 
 pub(crate) mod stack_only;
 

@@ -5,15 +5,12 @@ use halo2_proofs::plonk::{ConstraintSystem, Error, Expression, TableColumn, Virt
 use num_bigint::BigUint;
 use num_traits::{One, Zero};
 
-use crate::utils::{bn_to_field};
+use crate::{
+    spec::init_memory::InitMemory,
+    utils::{bn_to_field},
+};
 
-pub struct MemoryInit {
-    mmid: u64,
-    offset: u64,
-    value: u64,
-}
-
-impl MemoryInit {
+impl InitMemory {
     pub fn encode(&self) -> BigUint {
         let mut bn = BigUint::zero();
         bn += self.mmid;
@@ -57,7 +54,7 @@ pub struct MemoryInitChip<F: FieldExt> {
 }
 
 impl<F: FieldExt> MemoryInitChip<F> {
-    pub fn add_memory_init(self, layouter: &mut impl Layouter<F>, memory_init: Vec<MemoryInit>) -> Result<(), Error> {
+    pub fn add_memory_init(self, layouter: &mut impl Layouter<F>, memory_init: Vec<InitMemory>) -> Result<(), Error> {
         layouter.assign_table(
             || "memory_init",
             |mut table| {
