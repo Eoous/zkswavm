@@ -3,13 +3,15 @@ use halo2_proofs::arithmetic::FieldExt;
 use halo2_proofs::plonk::{Advice, Column, Error};
 use num_bigint::BigUint;
 
-use crate::instruction::Instruction;
-use crate::utils::{bn_to_field, Context};
+use crate::{
+    spec::instruction::InstructionEntry,
+    utils::{bn_to_field, Context},
+};
 
 pub struct Jump {
     eid: u64,
     last_jump_eid: u64,
-    instruction: Box<Instruction>,
+    instruction: Box<InstructionEntry>,
 }
 
 impl Jump {

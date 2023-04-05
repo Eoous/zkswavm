@@ -6,29 +6,18 @@ use num_bigint::BigUint;
 use num_traits::{One, Zero};
 use wasmi::tracer::itable::IEntry;
 
-use crate::utils::{bn_to_field, Context};
 use crate::{
-  constant
+    constant,
+    utils::{bn_to_field, Context},
+    spec::instruction::InstructionEntry,
 };
 
-#[derive(Clone)]
-pub struct Instruction {
-    moid: u16,
-    pub(crate) mmid: u16,
-    fid: u16,
-    bid: u16,
-    iid: u16,
-    opcode: u64,
-    aux: u64
-}
-
-impl Instruction {
+impl InstructionEntry {
     pub fn encode(&self) -> BigUint {
+        let opcode: BigUint = self.opcode.into();
         let mut bn = self.encode_addr();
-        bn <<= 64u8;
-        bn += self.opcode;
-        bn <<= 64u8;
-        bn += self.aux;
+        bn <<= 128usize;
+        bn += opcode;
         bn
     }
 
@@ -47,17 +36,9 @@ impl Instruction {
     }
 }
 
-impl From<&IEntry> for Instruction {
-    fn from(ientry: &IEntry) -> Instruction {
-        Instruction {
-            moid: ientry.module_instance_index,
-            mmid: ientry.module_instance_index,
-            fid: ientry.func_index,
-            bid: 0,
-            iid: ientry.pc,
-            opcode: ientry.opcode,
-            aux: 0,
-        }
+impl From<&IEntry> for InstructionEntry {
+    fn from(ientry: &IEntry) -> InstructionEntry {
+        todo!()
     }
 }
 
@@ -116,7 +97,7 @@ impl<F: FieldExt> InstructionChip<F> {
         }
     }
 
-    pub fn add_inst(&self, layouter: &mut impl Layouter<F>, insts: &Vec<Instruction>) -> Result<(), Error> {
+    pub fn add_inst(&self, layouter: &mut impl Layouter<F>, insts: &Vec<InstructionEntry>) -> Result<(), Error> {
         layouter.assign_table(
             || "init instructions",
             |mut table| {
