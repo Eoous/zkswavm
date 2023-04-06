@@ -1,8 +1,6 @@
 use num_bigint::BigUint;
 
-use crate::{
-    memory::VarType,
-};
+use crate::spec::memory::VarType;
 
 pub enum OpcodeClass {
     LocalGet = 1,

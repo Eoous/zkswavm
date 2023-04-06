@@ -1,11 +1,11 @@
 use wasmi::tracer::Tracer;
 
 use crate::{
-    memory::MemoryEvent,
     opcode::memory_event_of_step,
     spec::{
-        evnet::Event,
+        evnet::EventEntry,
         instruction::InstructionEntry,
+        memory::MemoryEvent,
     },
 };
 
@@ -14,7 +14,7 @@ pub(crate) const VAR_COLUMNS: usize = 50;
 #[derive(Default, Clone)]
 pub struct CircuitBuilder {
     pub(crate) instruction_table: Vec<InstructionEntry>,
-    pub(crate) event_table: Vec<Event>,
+    pub(crate) event_table: Vec<EventEntry>,
     pub(crate) memory_table: Vec<MemoryEvent>,
 }
 
@@ -24,8 +24,8 @@ impl CircuitBuilder {
             InstructionEntry::from(ientry)
         }).collect();
 
-        let event_table: Vec<Event> = tracer.etable.0.iter().map(|eentry| {
-            Event::from(eentry)
+        let event_table: Vec<EventEntry> = tracer.etable.0.iter().map(|eentry| {
+            EventEntry::from(eentry)
         }).collect();
 
         let memory_table: Vec<Vec<MemoryEvent>> = event_table.iter().map(|event| {

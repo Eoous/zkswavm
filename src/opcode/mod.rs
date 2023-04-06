@@ -1,18 +1,19 @@
 use wasmi::tracer::etable::RunInstructionTraceStep;
 
-use crate::memory::{AccessType, LocationType, MemoryEvent, VarType};
 use crate::opcode::stack_only::mem_op_from_stack_only_step;
-use crate::spec::evnet::Event;
+use crate::spec::{
+    evnet::EventEntry,
+    memory::{
+        AccessType,
+        LocationType,
+        MemoryEvent,
+        VarType
+    },
+};
 
 pub(crate) mod stack_only;
 
-pub enum Opcode {
-    LocalGet = 1isize,
-    Const = 2isize,
-    Drop,
-}
-
-pub fn memory_event_of_step(event: &Event) -> Vec<MemoryEvent> {
+pub fn memory_event_of_step(event: &EventEntry) -> Vec<MemoryEvent> {
     let eid = event.eid;
     let mmid = event.instruction.mmid.into();
 
