@@ -11,8 +11,10 @@ use crate::{
     instruction::InstructionConfig,
     jump::JumpConfig,
     memory::MemoryConfig,
-    opcode::Opcode,
     utils::bn_to_field,
+    spec::{
+        instruction::OpcodeClass,
+    }
 };
 use crate::event::EventCommonConfig;
 
@@ -63,7 +65,7 @@ impl<F: FieldExt> EventOpcodeConfig<F> for ConstConfig<F> {
     fn opcode(&self, meta: &mut VirtualCells<'_, F>) -> Expression<F> {
         // [(2 + vartype) << (64+13) + value] * enable
         // 2(10) << 77
-        (constant!(bn_to_field(&(BigUint::from(Opcode::Const as u64) << (64 + 13))))
+        (constant!(bn_to_field(&(BigUint::from(OpcodeClass::Const as u64) << (64 + 13))))
             // vartype * (1 << 77)
             + cur!(meta, self.vtype) * constant!(bn_to_field(&(BigUint::from(1u64) << (64 + 13))))
             // value

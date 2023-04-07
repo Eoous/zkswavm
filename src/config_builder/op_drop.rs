@@ -7,9 +7,13 @@ use crate::event::{EventCommonConfig, EventOpcodeConfig, EventOpcodeConfigBuilde
 use crate::instruction::InstructionConfig;
 use crate::jump::JumpConfig;
 use crate::memory::MemoryConfig;
-use crate::opcode::Opcode;
 use crate::utils::bn_to_field;
 use crate::{cur, constant};
+use crate::{
+    spec::{
+        instruction::OpcodeClass,
+    }
+};
 
 pub struct DropConfig<F: FieldExt> {
     enable: Column<Advice>,
@@ -39,7 +43,7 @@ impl<F: FieldExt> EventOpcodeConfig<F> for DropConfig<F> {
     fn opcode(&self, meta: &mut VirtualCells<'_, F>) -> Expression<F> {
         // (3 << 77) * enable.cur
         constant!(bn_to_field(
-            &(BigUint::from(Opcode::Drop as u64) << (64 + 13))
+            &(BigUint::from(OpcodeClass::Drop as u64) << (64 + 13))
         )) * cur!(meta, self.enable)
     }
 
