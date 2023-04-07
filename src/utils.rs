@@ -44,7 +44,7 @@ macro_rules! next {
 #[macro_export]
 macro_rules! constant_from {
     ($x: expr) => {
-        halo2_proofs::plonk::Expression::Constant(F::from($x))
+        halo2_proofs::plonk::Expression::Constant(F::from($x as u64))
     };
 }
 
