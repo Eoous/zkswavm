@@ -1,6 +1,5 @@
 use wasmi::tracer::etable::RunInstructionTraceStep;
 
-use crate::opcode::stack_only::mem_op_from_stack_only_step;
 use crate::spec::{
     evnet::EventEntry,
     memory::{
@@ -10,8 +9,6 @@ use crate::spec::{
         VarType
     },
 };
-
-pub(crate) mod stack_only;
 
 pub fn memory_event_of_step(event: &EventEntry) -> Vec<MemoryEvent> {
     let eid = event.eid;
@@ -36,16 +33,18 @@ pub fn memory_event_of_step(event: &EventEntry) -> Vec<MemoryEvent> {
         },
         RunInstructionTraceStep::GetLocal { depth, value } => {
             vec![
-                MemoryEvent::new(
-                    eid, mmid, *depth as u64,
-                    LocationType::Stack, AccessType::Read, VarType::I32,
-                value.0,
-                ),
-                MemoryEvent::new(
-                    eid, mmid.into(), 0,
-                    LocationType::Stack, AccessType::Write, VarType::I32,
-                    value.0,
-                ),
+                MemoryEvent {
+                    eid, emid: 1, mmid,
+                    offset: *depth as u64,
+                    ltype: LocationType::Stack, atype: AccessType::Read,
+                    vtype: VarType::I32, value: value.0,
+                },
+                MemoryEvent {
+                    eid, emid: 1, mmid: mmid.into(),
+                    offset: 0,
+                    ltype: LocationType::Stack, atype: AccessType::Write,
+                    vtype: VarType::I32, value: value.0,
+                },
             ]
         }
         RunInstructionTraceStep::I32Const { value } => {
@@ -58,4 +57,43 @@ pub fn memory_event_of_step(event: &EventEntry) -> Vec<MemoryEvent> {
             mem_op_from_stack_only_step(eid, mmid, VarType::I32, VarType::I32, &[*right as u64, *left as u64], &[*value as u64])
         }
     }
+}
+
+fn mem_op_from_stack_only_step(
+    eid: u64,
+    mmid: u64,
+    inputs_type: VarType,
+    outputs_type: VarType,
+    pop_values: &[u64],
+    push_values: &[u64],
+) -> Vec<MemoryEvent> {
+    let mut mem_ops = vec![];
+
+    for i in 0..pop_values.len() {
+        mem_ops.push(MemoryEvent {
+            eid,
+            emid: 1,
+            mmid,
+            offset: i as u64,
+            ltype: LocationType::Stack,
+            atype: AccessType::Read,
+            vtype: inputs_type,
+            value: pop_values[i],
+        });
+    }
+
+    for i in 0..push_values.len() {
+        mem_ops.push(MemoryEvent {
+            eid,
+            emid: 1,
+            mmid,
+            offset: i as u64,
+            ltype: LocationType::Stack,
+            atype: AccessType::Write,
+            vtype: outputs_type,
+            value: push_values[i],
+        });
+    }
+
+    mem_ops
 }
