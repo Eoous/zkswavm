@@ -13,9 +13,9 @@ use crate::{
         AccessType,
     }
 };
-use crate::memory_init::MemoryInitConfig;
-use crate::range::RangeConfig;
-use crate::row_diff::RowDiffConfig;
+use crate::circuits::memory_init::MemoryInitConfig;
+use crate::circuits::range::RangeConfig;
+use crate::circuits::row_diff::RowDiffConfig;
 use crate::{
     cur, pre, next, constant, constant_from
 };

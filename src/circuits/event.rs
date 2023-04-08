@@ -2,12 +2,12 @@ use std::marker::PhantomData;
 use halo2_proofs::arithmetic::FieldExt;
 use halo2_proofs::plonk::{Advice, Column, ConstraintSystem, Expression, VirtualCells};
 
-use crate::instruction::{encode_inst_expr, InstructionConfig};
+use crate::circuits::instruction::{encode_inst_expr, InstructionConfig};
 use crate::{
     cur, pre, next, constant, constant_from
 };
-use crate::jump::JumpConfig;
-use crate::memory::MemoryConfig;
+use crate::circuits::jump::JumpConfig;
+use crate::circuits::memory::MemoryConfig;
 use crate::config_builder::op_const::ConstConfigBuilder;
 use crate::config_builder::op_drop::DropConfigBuilder;
 use crate::config_builder::op_local_get::LocalGetConfigBuilder;
