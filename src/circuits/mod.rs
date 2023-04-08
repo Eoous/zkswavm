@@ -5,3 +5,4 @@ pub mod memory_init;
 pub mod memory;
 pub mod range;
 pub mod row_diff;
+pub mod config_builder;

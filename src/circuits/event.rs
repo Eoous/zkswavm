@@ -8,9 +8,9 @@ use crate::{
 };
 use crate::circuits::jump::JumpConfig;
 use crate::circuits::memory::MemoryConfig;
-use crate::config_builder::op_const::ConstConfigBuilder;
-use crate::config_builder::op_drop::DropConfigBuilder;
-use crate::config_builder::op_local_get::LocalGetConfigBuilder;
+use crate::circuits::config_builder::op_const::ConstConfigBuilder;
+use crate::circuits::config_builder::op_drop::DropConfigBuilder;
+use crate::circuits::config_builder::op_local_get::LocalGetConfigBuilder;
 
 pub trait EventOpcodeConfigBuilder<F: FieldExt> {
     fn configure(
