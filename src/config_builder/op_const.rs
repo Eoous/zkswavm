@@ -1,22 +1,21 @@
+use std::marker::PhantomData;
+
 use halo2_proofs::{
     arithmetic::FieldExt,
     plonk::{Advice, Column, ConstraintSystem, Expression, VirtualCells},
 };
 use num_bigint::BigUint;
-use std::marker::PhantomData;
 
 use crate::{
     constant, constant_from, cur,
-    event::{EventOpcodeConfig, EventOpcodeConfigBuilder},
-    instruction::InstructionConfig,
-    jump::JumpConfig,
-    memory::MemoryConfig,
-    utils::bn_to_field,
-    spec::{
-        instruction::OpcodeClass,
-    }
+    spec::instruction::OpcodeClass,
+    utils::bn_to_field
 };
-use crate::event::EventCommonConfig;
+use crate::circuits::event::{EventOpcodeConfig, EventOpcodeConfigBuilder};
+use crate::circuits::event::EventCommonConfig;
+use crate::circuits::instruction::InstructionConfig;
+use crate::circuits::jump::JumpConfig;
+use crate::circuits::memory::MemoryConfig;
 
 pub struct ConstConfig<F: FieldExt> {
     vtype: Column<Advice>,
@@ -83,9 +82,10 @@ impl<F: FieldExt> EventOpcodeConfig<F> for ConstConfig<F> {
 
 #[cfg(test)]
 mod tests {
-    use crate::test::test_circuit_builder::run_test_circuit;
     use halo2_proofs::pairing::bn256::Fr as Fp;
     use wasmi::{ImportsBuilder, ModuleInstance};
+
+    use crate::test::test_circuit_builder::run_test_circuit;
 
     #[test]
     fn test_ok() {

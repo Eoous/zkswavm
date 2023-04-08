@@ -1,4 +1,5 @@
 use std::marker::PhantomData;
+
 use halo2_proofs::{
     arithmetic::FieldExt,
     plonk::{Advice, Column, ConstraintSystem, Expression, VirtualCells},
@@ -7,16 +8,14 @@ use num_bigint::BigUint;
 
 use crate::{
     constant, constant_from, cur,
-    event::{EventOpcodeConfig, EventOpcodeConfigBuilder},
-    instruction::InstructionConfig,
-    jump::JumpConfig,
-    memory::MemoryConfig,
-    utils::bn_to_field,
-    spec::{
-        instruction::OpcodeClass,
-    }
+    spec::instruction::OpcodeClass,
+    utils::bn_to_field
 };
-use crate::event::EventCommonConfig;
+use crate::circuits::event::{EventOpcodeConfig, EventOpcodeConfigBuilder};
+use crate::circuits::event::EventCommonConfig;
+use crate::circuits::instruction::InstructionConfig;
+use crate::circuits::jump::JumpConfig;
+use crate::circuits::memory::MemoryConfig;
 
 pub struct LocalGetConfig<F: FieldExt> {
     offset: Column<Advice>,

@@ -1,13 +1,14 @@
 use std::marker::PhantomData;
+
 use halo2_proofs::{arithmetic::FieldExt, circuit::SimpleFloorPlanner, plonk::Circuit};
 
 use crate::{
-    event::{EventConfig, EventChip},
-    instruction::{InstructionConfig, InstructionChip},
-    jump::JumpConfig,
-    memory::MemoryConfig,
     builder::{CircuitBuilder, VAR_COLUMNS},
 };
+use crate::circuits::event::{EventChip, EventConfig};
+use crate::circuits::instruction::{InstructionChip, InstructionConfig};
+use crate::circuits::jump::JumpConfig;
+use crate::circuits::memory::MemoryConfig;
 
 #[derive(Clone)]
 pub struct TestCircuitConfig<F: FieldExt> {

@@ -3,10 +3,10 @@ use halo2_proofs::arithmetic::FieldExt;
 use halo2_proofs::plonk::{Advice, Column, ConstraintSystem, Expression, VirtualCells};
 use num_bigint::BigUint;
 
-use crate::event::{EventCommonConfig, EventOpcodeConfig, EventOpcodeConfigBuilder};
-use crate::instruction::InstructionConfig;
-use crate::jump::JumpConfig;
-use crate::memory::MemoryConfig;
+use crate::circuits::event::{EventCommonConfig, EventOpcodeConfig, EventOpcodeConfigBuilder};
+use crate::circuits::instruction::InstructionConfig;
+use crate::circuits::jump::JumpConfig;
+use crate::circuits::memory::MemoryConfig;
 use crate::utils::bn_to_field;
 use crate::{cur, constant};
 use crate::{
