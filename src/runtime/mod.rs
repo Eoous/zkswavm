@@ -1,14 +1,43 @@
+pub mod types;
+pub mod wasmi_interpreter;
+
 use wasmi::tracer::etable::RunInstructionTraceStep;
 
+use crate::runtime::{
+    types::{CompileError, ExecutionError, Value},
+    wasmi_interpreter::WasmiRuntime,
+};
+
 use crate::spec::{
+    CompileTable, ExecutionTable,
     evnet::EventEntry,
     memory::{
         AccessType,
         LocationType,
         MemoryEvent,
         VarType
-    },
+    }
 };
+
+pub struct CompileOutcome<M> {
+    pub textual_repr: String,
+    pub module: M,
+    pub tables: CompileTable,
+}
+
+pub struct ExecutionOutcome {
+    pub tables: ExecutionTable,
+}
+
+pub trait WasmRuntime {
+    type Module;
+
+    fn new() -> Self;
+    fn compile(&self, textual_repr: &str) -> Result<CompileOutcome<Self::Module>, CompileError>;
+    fn run(&self, compile_outcome: &CompileOutcome<Self::Module>, function_name: &str, args: Vec<Value>) -> Result<ExecutionOutcome, ExecutionError>;
+}
+
+pub type WasmInterpreter = WasmiRuntime;
 
 pub fn memory_event_of_step(event: &EventEntry) -> Vec<MemoryEvent> {
     let eid = event.eid;
