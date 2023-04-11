@@ -1,5 +1,10 @@
+use std::cell::RefCell;
+use std::rc::Rc;
 use wasmi::{ImportsBuilder, ModuleInstance, RuntimeValue};
 
+use crate::runtime::memory_event_of_step;
+use crate::spec::evnet::EventEntry;
+use crate::spec::ExecutionTable;
 use crate::{
     runtime::{
         types::{CompileError, ExecutionError, Value},
@@ -60,6 +65,30 @@ impl WasmRuntime for WasmiRuntime {
         function_name: &str,
         args: Vec<Value>,
     ) -> Result<ExecutionOutcome, ExecutionError> {
-        todo!()
+        let instance = ModuleInstance::new(&compile_outcome.module, &ImportsBuilder::default())
+            .expect("failed to instantiate wasm module")
+            .assert_no_start();
+
+        let mut tracer = wasmi::tracer::Tracer::default();
+        tracer.register_module_instance(&instance);
+        let tracer = Rc::new(RefCell::new(tracer));
+
+        let tracer = tracer.borrow();
+        let events: Vec<_> = tracer
+            .etable
+            .0
+            .iter()
+            .map(|e| EventEntry::from(e))
+            .collect();
+        let memorys: Vec<_> = events.iter().map(|e| memory_event_of_step(e)).collect();
+        let jumps = vec![];
+
+        Ok(ExecutionOutcome {
+            tables: ExecutionTable {
+                event: events,
+                memory: memorys.into_iter().flat_map(|x| x.into_iter()).collect(),
+                jump: jumps,
+            },
+        })
     }
 }
