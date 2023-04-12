@@ -1,8 +1,7 @@
-pub mod utils;
-pub mod builder;
+pub mod circuits;
 pub mod runtime;
 pub mod spec;
-pub mod circuits;
+pub mod utils;
 
 pub mod test;
 

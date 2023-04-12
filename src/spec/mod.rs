@@ -1,9 +1,6 @@
 use crate::spec::{
-    evnet::EventEntry,
-    init_memory::InitMemory,
-    instruction::InstructionEntry,
+    evnet::EventEntry, init_memory::InitMemory, instruction::InstructionEntry, jump::JumpEntry,
     memory::MemoryEvent,
-    jump::JumpEntry,
 };
 
 pub mod evnet;
@@ -12,11 +9,13 @@ pub mod instruction;
 pub mod jump;
 pub mod memory;
 
+#[derive(Default)]
 pub struct CompileTable {
     pub instructions: Vec<InstructionEntry>,
     pub init_memory: Vec<InitMemory>,
 }
 
+#[derive(Default)]
 pub struct ExecutionTable {
     pub event: Vec<EventEntry>,
     pub memory: Vec<MemoryEvent>,
