@@ -6,16 +6,12 @@ use halo2_proofs::{
 };
 use num_bigint::BigUint;
 
-use crate::{
-    constant, constant_from, cur,
-    spec::instruction::OpcodeClass,
-    utils::bn_to_field
-};
-use crate::circuits::event::{EventOpcodeConfig, EventOpcodeConfigBuilder};
 use crate::circuits::event::EventCommonConfig;
+use crate::circuits::event::{EventOpcodeConfig, EventOpcodeConfigBuilder};
 use crate::circuits::instruction::InstructionConfig;
 use crate::circuits::jump::JumpConfig;
 use crate::circuits::memory::MemoryConfig;
+use crate::{constant, constant_from, cur, spec::instruction::OpcodeClass, utils::bn_to_field};
 
 pub struct ConstConfig<F: FieldExt> {
     vtype: Column<Advice>,
@@ -68,8 +64,7 @@ impl<F: FieldExt> EventOpcodeConfig<F> for ConstConfig<F> {
             // vartype * (1 << 77)
             + cur!(meta, self.vtype) * constant!(bn_to_field(&(BigUint::from(1u64) << (64 + 13))))
             // value
-            + cur!(meta, self.value)
-        )
+            + cur!(meta, self.value))
             * cur!(meta, self.enable)
     }
 
@@ -82,6 +77,7 @@ impl<F: FieldExt> EventOpcodeConfig<F> for ConstConfig<F> {
 
 #[cfg(test)]
 mod tests {
+    use crate::runtime::{WasmInterpreter, WasmRuntime};
     use halo2_proofs::pairing::bn256::Fr as Fp;
     use wasmi::{ImportsBuilder, ModuleInstance};
 
@@ -89,24 +85,19 @@ mod tests {
 
     #[test]
     fn test_ok() {
-        let wasm_binary: Vec<u8> = wabt::wat2wasm(
-            r#"
+        let textual_repr = r#"
                 (module
                     (func (export "test")
                       (i32.const 0)
                       (drop)
                     )
                    )
-                "#,
-        )
-            .expect("failed to parse wat");
+                "#;
 
-        let module = wasmi::Module::from_buffer(&wasm_binary).expect("failed to load wasm");
+        let compiler = WasmInterpreter::new();
+        let compiled_module = compiler.compile(textual_repr).unwrap();
+        let execution_log = compiler.run(&compiled_module, "test", vec![]).unwrap();
 
-        let instance = ModuleInstance::new(&module, &ImportsBuilder::default())
-            .expect("failed to instantiate wasm module")
-            .assert_no_start();
-
-        run_test_circuit::<Fp>(&instance).expect("failed")
+        run_test_circuit::<Fp>(compiled_module.tables, execution_log.tables).unwrap()
     }
 }
