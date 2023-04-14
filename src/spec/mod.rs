@@ -1,9 +1,9 @@
 use crate::spec::{
-    evnet::EventEntry, init_memory::InitMemory, instruction::InstructionEntry, jump::JumpEntry,
+    event::EventEntry, init_memory::InitMemory, instruction::InstructionEntry, jump::JumpEntry,
     memory::MemoryEvent,
 };
 
-pub mod evnet;
+pub mod event;
 pub mod init_memory;
 pub mod instruction;
 pub mod jump;

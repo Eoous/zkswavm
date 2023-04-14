@@ -3,7 +3,7 @@ use std::rc::Rc;
 use wasmi::{ImportsBuilder, ModuleInstance, RuntimeValue};
 
 use crate::runtime::memory_event_of_step;
-use crate::spec::evnet::EventEntry;
+use crate::spec::event::EventEntry;
 use crate::spec::ExecutionTable;
 use crate::{
     runtime::{
