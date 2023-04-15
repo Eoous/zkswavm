@@ -1,4 +1,4 @@
-use crate::spec::instruction::InstructionEntry;
+use crate::instruction::InstructionEntry;
 
 pub struct JumpEntry {
     eid: u64,
