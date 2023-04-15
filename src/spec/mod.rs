@@ -1,6 +1,6 @@
 use crate::spec::{
-    event::EventEntry, init_memory::InitMemory, instruction::InstructionEntry, jump::JumpEntry,
-    memory::MemoryEvent,
+    event::EventEntry, init_memory::InitMemoryEntry, instruction::InstructionEntry,
+    jump::JumpEntry, memory::MemoryEntry,
 };
 
 pub mod event;
@@ -12,12 +12,12 @@ pub mod memory;
 #[derive(Default)]
 pub struct CompileTable {
     pub instructions: Vec<InstructionEntry>,
-    pub init_memory: Vec<InitMemory>,
+    pub init_memory: Vec<InitMemoryEntry>,
 }
 
 #[derive(Default)]
 pub struct ExecutionTable {
     pub event: Vec<EventEntry>,
-    pub memory: Vec<MemoryEvent>,
+    pub memory: Vec<MemoryEntry>,
     pub jump: Vec<JumpEntry>,
 }

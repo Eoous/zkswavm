@@ -1,25 +1,16 @@
-use std::marker::PhantomData;
 use halo2_proofs::arithmetic::FieldExt;
 use halo2_proofs::plonk::{Advice, Column, ConstraintSystem, Expression, VirtualCells};
 use halo2_proofs::poly::Rotation;
-use num_bigint::BigUint;
 use lazy_static::lazy_static;
+use num_bigint::BigUint;
+use std::marker::PhantomData;
 
-use crate::{
-    spec::memory::{
-        VarType,
-        MemoryEvent,
-        LocationType,
-        AccessType,
-    }
-};
 use crate::circuits::memory_init::MemoryInitConfig;
 use crate::circuits::range::RangeConfig;
 use crate::circuits::row_diff::RowDiffConfig;
-use crate::{
-    cur, pre, next, constant, constant_from
-};
+use crate::spec::memory::{AccessType, LocationType, MemoryEntry, VarType};
 use crate::utils::bn_to_field;
+use crate::{constant, constant_from, cur, next, pre};
 
 lazy_static! {
     static ref VAR_TYPE_SHIFT: BigUint = BigUint::from(1u64) << 64;
@@ -51,7 +42,7 @@ pub struct MemoryConfig<F: FieldExt> {
 impl<F: FieldExt> MemoryConfig<F> {
     pub fn new(
         meta: &mut ConstraintSystem<F>,
-        cols: &mut impl Iterator<Item = Column<Advice>>
+        cols: &mut impl Iterator<Item = Column<Advice>>,
     ) -> MemoryConfig<F> {
         let ltype = RowDiffConfig::configure("location type", meta, cols);
         let mmid = RowDiffConfig::configure("mmid", meta, cols);
@@ -65,8 +56,16 @@ impl<F: FieldExt> MemoryConfig<F> {
         let emid = cols.next().unwrap();
 
         MemoryConfig {
-            ltype, mmid, offset, eid,
-            emid, atype, vtype, value, enable, same_location,
+            ltype,
+            mmid,
+            offset,
+            eid,
+            emid,
+            atype,
+            vtype,
+            value,
+            enable,
+            same_location,
             _mark: PhantomData,
         }
     }
@@ -100,9 +99,9 @@ impl<F: FieldExt> MemoryConfig<F> {
                     + emid(meta) * constant!(bn_to_field(&EMID_SHIFT))
                     + sp(meta) * constant!(bn_to_field(&OFFSET_SHIFT))
                     + constant!(bn_to_field(&LOC_TYPE_SHIFT))
-                    * constant_from!(LocationType::Stack)
+                        * constant_from!(LocationType::Stack)
                     + constant!(bn_to_field(&ACCESS_TYPE_SHIFT))
-                    * constant_from!(AccessType::Write)
+                        * constant_from!(AccessType::Write)
                     + vtype(meta) * constant!(bn_to_field(&VAR_TYPE_SHIFT))
                     + value(meta))
                     * enable(meta),
@@ -117,9 +116,9 @@ impl<F: FieldExt> MemoryConfig<F> {
                     + emid(meta) * constant!(bn_to_field(&EMID_SHIFT))
                     + sp(meta) * constant!(bn_to_field(&OFFSET_SHIFT))
                     + constant!(bn_to_field(&LOC_TYPE_SHIFT))
-                    * constant_from!(LocationType::Stack)
+                        * constant_from!(LocationType::Stack)
                     + constant!(bn_to_field(&ACCESS_TYPE_SHIFT))
-                    * constant_from!(AccessType::Read)
+                        * constant_from!(AccessType::Read)
                     + vtype(meta) * constant!(bn_to_field(&VAR_TYPE_SHIFT))
                     + value(meta))
                     * enable(meta),
@@ -145,9 +144,9 @@ impl<F: FieldExt> MemoryConfig<F> {
                     + emid(meta) * constant!(bn_to_field(&EMID_SHIFT))
                     + sp(meta) * constant!(bn_to_field(&OFFSET_SHIFT))
                     + constant!(bn_to_field(&LOC_TYPE_SHIFT))
-                    * constant_from!(LocationType::Stack)
+                        * constant_from!(LocationType::Stack)
                     + constant!(bn_to_field(&ACCESS_TYPE_SHIFT))
-                    * constant_from!(AccessType::Write)
+                        * constant_from!(AccessType::Write)
                     + vtype(meta) * constant!(bn_to_field(&VAR_TYPE_SHIFT))
                     + value(meta))
                     * enable(meta),
@@ -162,9 +161,9 @@ impl<F: FieldExt> MemoryConfig<F> {
                     + emid(meta) * constant!(bn_to_field(&EMID_SHIFT))
                     + sp(meta) * constant!(bn_to_field(&OFFSET_SHIFT))
                     + constant!(bn_to_field(&LOC_TYPE_SHIFT))
-                    * constant_from!(LocationType::Stack)
+                        * constant_from!(LocationType::Stack)
                     + constant!(bn_to_field(&ACCESS_TYPE_SHIFT))
-                    * constant_from!(AccessType::Read)
+                        * constant_from!(AccessType::Read)
                     + vtype(meta) * constant!(bn_to_field(&VAR_TYPE_SHIFT))
                     + value(meta))
                     * enable(meta),
@@ -210,7 +209,7 @@ impl<F: FieldExt> MemoryConfig<F> {
 
             vec![
                 self.ltype.is_same(meta) * self.mmid.is_same(meta) * self.offset.is_same(meta)
-                                         - same_location,
+                    - same_location,
             ]
         });
 
@@ -221,15 +220,17 @@ impl<F: FieldExt> MemoryConfig<F> {
         meta.create_gate("stack_or_heap", |meta| {
             let ltype = self.ltype.data(meta);
 
-            vec![
-                ltype.clone() * (ltype - Expression::Constant(F::one()))
-            ]
+            vec![ltype.clone() * (ltype - Expression::Constant(F::one()))]
         });
 
         self
     }
 
-    fn configure_range(&self, meta: &mut ConstraintSystem<F>, range: &RangeConfig<F>) -> &MemoryConfig<F> {
+    fn configure_range(
+        &self,
+        meta: &mut ConstraintSystem<F>,
+        range: &RangeConfig<F>,
+    ) -> &MemoryConfig<F> {
         range.configure_in_range(meta, "mmid in range", |meta| self.mmid.data(meta));
         range.configure_in_range(meta, "offset in range", |meta| self.offset.data(meta));
         range.configure_in_range(meta, "eid in range", |meta| self.eid.data(meta));
@@ -240,15 +241,22 @@ impl<F: FieldExt> MemoryConfig<F> {
         self
     }
 
-    fn configure_sort(&self, meta: &mut ConstraintSystem<F>, range: &RangeConfig<F>) -> &MemoryConfig<F> {
+    fn configure_sort(
+        &self,
+        meta: &mut ConstraintSystem<F>,
+        range: &RangeConfig<F>,
+    ) -> &MemoryConfig<F> {
         range.configure_in_range(meta, "ltype sort", |meta| {
             self.is_enable(meta) * self.ltype.diff(meta)
         });
         range.configure_in_range(meta, "mmid sort", |meta| {
             self.is_enable(meta) * self.ltype.is_same(meta) * self.mmid.diff(meta)
         });
-        range.configure_in_range(meta, "offset sort",|meta| {
-            self.is_enable(meta) * self.ltype.is_same(meta) * self.mmid.is_same(meta) * self.offset.is_same(meta)
+        range.configure_in_range(meta, "offset sort", |meta| {
+            self.is_enable(meta)
+                * self.ltype.is_same(meta)
+                * self.mmid.is_same(meta)
+                * self.offset.is_same(meta)
         });
         range.configure_in_range(meta, "eid sort", |meta| {
             self.is_enable(meta) * self.is_same_location(meta) * self.eid.diff(meta)
@@ -263,7 +271,11 @@ impl<F: FieldExt> MemoryConfig<F> {
         self
     }
 
-    fn configure_rule(&self, meta: &mut ConstraintSystem<F>, memory_init: &MemoryInitConfig<F>) -> &MemoryConfig<F> {
+    fn configure_rule(
+        &self,
+        meta: &mut ConstraintSystem<F>,
+        memory_init: &MemoryInitConfig<F>,
+    ) -> &MemoryConfig<F> {
         meta.create_gate("read after write", |meta| {
             vec![
                 self.is_enable(meta) * self.is_read_not_bit(meta) * self.diff(meta, self.value),
@@ -286,9 +298,9 @@ impl<F: FieldExt> MemoryConfig<F> {
                 * (Expression::Constant(F::one()) - self.is_same_location(meta))
                 * self.is_heap(meta)
                 * memory_init.encode(
-                self.mmid.data(meta),
-                self.offset.data(meta),
-                cur!(meta, self.value),
+                    self.mmid.data(meta),
+                    self.offset.data(meta),
+                    cur!(meta, self.value),
                 )
         });
 
@@ -309,7 +321,8 @@ impl<F: FieldExt> MemoryConfig<F> {
 
     fn is_read_not_bit(&self, meta: &mut VirtualCells<F>) -> Expression<F> {
         let atype = cur!(meta, self.atype);
-        (atype.clone() - constant_from!(AccessType::Init)) * (atype - constant_from!(AccessType::Write))
+        (atype.clone() - constant_from!(AccessType::Init))
+            * (atype - constant_from!(AccessType::Write))
     }
 
     fn is_same_location(&self, meta: &mut VirtualCells<F>) -> Expression<F> {

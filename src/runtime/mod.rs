@@ -10,7 +10,7 @@ use crate::runtime::{
 
 use crate::spec::{
     event::EventEntry,
-    memory::{AccessType, LocationType, MemoryEvent, VarType},
+    memory::{AccessType, LocationType, MemoryEntry, VarType},
     CompileTable, ExecutionTable,
 };
 
@@ -39,7 +39,7 @@ pub trait WasmRuntime {
 
 pub type WasmInterpreter = WasmiRuntime;
 
-pub fn memory_event_of_step(event: &EventEntry) -> Vec<MemoryEvent> {
+pub fn memory_event_of_step(event: &EventEntry) -> Vec<MemoryEntry> {
     let eid = event.eid;
     let mmid = event.instruction.mmid.into();
 
@@ -78,7 +78,7 @@ pub fn memory_event_of_step(event: &EventEntry) -> Vec<MemoryEvent> {
         }
         RunInstructionTraceStep::GetLocal { depth, value } => {
             vec![
-                MemoryEvent {
+                MemoryEntry {
                     eid,
                     emid: 1,
                     mmid,
@@ -88,7 +88,7 @@ pub fn memory_event_of_step(event: &EventEntry) -> Vec<MemoryEvent> {
                     vtype: VarType::I32,
                     value: value.0,
                 },
-                MemoryEvent {
+                MemoryEntry {
                     eid,
                     emid: 1,
                     mmid: mmid.into(),
@@ -134,11 +134,11 @@ fn mem_op_from_stack_only_step(
     outputs_type: VarType,
     pop_values: &[u64],
     push_values: &[u64],
-) -> Vec<MemoryEvent> {
+) -> Vec<MemoryEntry> {
     let mut mem_ops = vec![];
 
     for i in 0..pop_values.len() {
-        mem_ops.push(MemoryEvent {
+        mem_ops.push(MemoryEntry {
             eid,
             emid: 1,
             mmid,
@@ -151,7 +151,7 @@ fn mem_op_from_stack_only_step(
     }
 
     for i in 0..push_values.len() {
-        mem_ops.push(MemoryEvent {
+        mem_ops.push(MemoryEntry {
             eid,
             emid: 1,
             mmid,
