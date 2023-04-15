@@ -1,4 +1,4 @@
-use crate::spec::{
+use crate::{
     event::EventEntry, init_memory::InitMemoryEntry, instruction::InstructionEntry,
     jump::JumpEntry, memory::MemoryEntry,
 };
@@ -8,6 +8,8 @@ pub mod init_memory;
 pub mod instruction;
 pub mod jump;
 pub mod memory;
+pub mod step;
+pub mod types;
 
 #[derive(Default)]
 pub struct CompileTable {
