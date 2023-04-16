@@ -1,28 +1,21 @@
+use crate::runtime::memory_event_of_step;
+use crate::runtime::{CompileOutcome, ExecutionOutcome, WasmRuntime};
+use specs::etable::EventTableEntry;
+use specs::types::{CompileError, ExecutionError, Value};
+use specs::ExecutionTable;
+use specs::{itable::InstructionTableEntry, CompileTable};
 use std::cell::RefCell;
 use std::rc::Rc;
 use wasmi::{ImportsBuilder, ModuleInstance, RuntimeValue};
 
-use crate::runtime::memory_event_of_step;
-use crate::spec::event::EventEntry;
-use crate::spec::ExecutionTable;
-use crate::{
-    runtime::{
-        types::{CompileError, ExecutionError, Value},
-        CompileOutcome, ExecutionOutcome, WasmRuntime,
-    },
-    spec::{instruction::InstructionEntry, CompileTable},
-};
-
 pub struct WasmiRuntime {}
 
-impl From<Value> for RuntimeValue {
-    fn from(value: Value) -> RuntimeValue {
-        match value {
-            Value::i32(value) => RuntimeValue::from(value),
-            Value::u32(value) => RuntimeValue::from(value),
-            Value::i64(value) => RuntimeValue::from(value),
-            Value::u64(value) => RuntimeValue::from(value),
-        }
+fn into_wasmi_value(v: Value) -> RuntimeValue {
+    match v {
+        Value::I32(v) => RuntimeValue::I32(v),
+        Value::I64(v) => RuntimeValue::I64(v),
+        Value::U32(_) => todo!(),
+        Value::U64(_) => todo!(),
     }
 }
 
@@ -52,7 +45,7 @@ impl WasmRuntime for WasmiRuntime {
                     .itable
                     .0
                     .iter()
-                    .map(|inst| InstructionEntry::from(inst))
+                    .map(|inst| inst.clone().into())
                     .collect(),
                 init_memory: vec![], // todo
             },
@@ -74,12 +67,7 @@ impl WasmRuntime for WasmiRuntime {
         let tracer = Rc::new(RefCell::new(tracer));
 
         let tracer = tracer.borrow();
-        let events: Vec<_> = tracer
-            .etable
-            .0
-            .iter()
-            .map(|e| EventEntry::from(e))
-            .collect();
+        let events: Vec<_> = tracer.etable.0.iter().map(|e| e.clone().into()).collect();
         let memorys: Vec<_> = events.iter().map(|e| memory_event_of_step(e)).collect();
         let jumps = vec![];
 
