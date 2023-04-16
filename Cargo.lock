@@ -536,9 +536,9 @@ checksum = "9c8d87e72b64a3b4db28d11ce29237c246188f4f51057d65a7eab63b7987e423"
 [[package]]
 name = "wasmi"
 version = "0.11.0"
-source = "git+https://github.com/DelphinusLab/wasmi?rev=22094c01be0c73db9cae3019914220932c98c447#22094c01be0c73db9cae3019914220932c98c447"
 dependencies = [
  "parity-wasm",
+ "specs",
  "wasmi-validation",
  "wasmi_core",
 ]
@@ -546,7 +546,6 @@ dependencies = [
 [[package]]
 name = "wasmi-validation"
 version = "0.4.1"
-source = "git+https://github.com/DelphinusLab/wasmi?rev=22094c01be0c73db9cae3019914220932c98c447#22094c01be0c73db9cae3019914220932c98c447"
 dependencies = [
  "parity-wasm",
 ]
@@ -554,7 +553,6 @@ dependencies = [
 [[package]]
 name = "wasmi_core"
 version = "0.1.0"
-source = "git+https://github.com/DelphinusLab/wasmi?rev=22094c01be0c73db9cae3019914220932c98c447#22094c01be0c73db9cae3019914220932c98c447"
 dependencies = [
  "downcast-rs",
  "libm",

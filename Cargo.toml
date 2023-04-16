@@ -11,11 +11,10 @@ num-integer = "0.1.45"
 rand = "0.8"
 num-bigint = { version = "0.4", features = ["rand"] }
 num-traits = "0.2.15"
-
 lazy_static = "1.4.0"
-
 wabt = "0.10.0"
-wasmi = { git = "https://github.com/DelphinusLab/wasmi", rev = "22094c01be0c73db9cae3019914220932c98c447" }
+wasmi = { path = "./wasmi" }
 
 specs = { path = "./specs" }
+
 [dev-dependencies]
