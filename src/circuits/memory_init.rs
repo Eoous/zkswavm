@@ -1,14 +1,16 @@
+use crate::circuits::Encode;
 use halo2_proofs::arithmetic::FieldExt;
 use halo2_proofs::circuit::Layouter;
 use halo2_proofs::plonk::{ConstraintSystem, Error, Expression, TableColumn, VirtualCells};
 use num_bigint::BigUint;
 use num_traits::{One, Zero};
+use specs::imtable::InitMemoryTableEntry;
 use std::marker::PhantomData;
 
-use crate::{spec::init_memory::InitMemoryEntry, utils::bn_to_field};
+use crate::utils::bn_to_field;
 
-impl InitMemoryEntry {
-    pub fn encode(&self) -> BigUint {
+impl Encode for InitMemoryTableEntry {
+    fn encode(&self) -> BigUint {
         let mut bn = BigUint::zero();
         bn += self.mmid;
         bn <<= 16;
@@ -64,7 +66,7 @@ impl<F: FieldExt> MemoryInitChip<F> {
     pub fn add_memory_init(
         self,
         layouter: &mut impl Layouter<F>,
-        memory_init: Vec<InitMemoryEntry>,
+        memory_init: Vec<InitMemoryTableEntry>,
     ) -> Result<(), Error> {
         layouter.assign_table(
             || "memory_init",

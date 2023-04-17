@@ -1,19 +1,25 @@
-use std::marker::PhantomData;
 use halo2_proofs::arithmetic::FieldExt;
-use halo2_proofs::circuit::{Layouter};
-use halo2_proofs::plonk::{Column, ConstraintSystem, Error, Expression, Fixed, TableColumn, VirtualCells};
+use halo2_proofs::circuit::Layouter;
+use halo2_proofs::plonk::{
+    Column, ConstraintSystem, Error, Expression, Fixed, TableColumn, VirtualCells,
+};
 use num_bigint::BigUint;
 use num_traits::{One, Zero};
+use specs::itable::InstructionTableEntry;
+use std::marker::PhantomData;
 use wasmi::tracer::itable::IEntry;
 
 use crate::{
     constant,
     utils::{bn_to_field, Context},
-    spec::instruction::InstructionEntry,
 };
+trait Encode {
+    fn encode(&self) -> BigUint;
+    fn encode_addr(&self) -> BigUint;
+}
 
-impl InstructionEntry {
-    pub fn encode(&self) -> BigUint {
+impl Encode for InstructionTableEntry {
+    fn encode(&self) -> BigUint {
         let opcode: BigUint = self.opcode.into();
         let mut bn = self.encode_addr();
         bn <<= 128usize;
@@ -21,7 +27,7 @@ impl InstructionEntry {
         bn
     }
 
-    pub fn encode_addr(&self) -> BigUint {
+    fn encode_addr(&self) -> BigUint {
         let mut bn = BigUint::zero();
         bn += self.moid;
         bn <<= 16u8;
@@ -33,12 +39,6 @@ impl InstructionEntry {
         bn <<= 16u8;
         bn += self.iid;
         bn
-    }
-}
-
-impl From<&IEntry> for InstructionEntry {
-    fn from(ientry: &IEntry) -> InstructionEntry {
-        todo!()
     }
 }
 
@@ -80,7 +80,12 @@ impl<F: FieldExt> InstructionConfig<F> {
         }
     }
 
-    pub fn configure_in_table(&self, meta: &mut ConstraintSystem<F>, key: &'static str, expr: impl FnOnce(&mut VirtualCells<'_, F>) -> Expression<F>) {
+    pub fn configure_in_table(
+        &self,
+        meta: &mut ConstraintSystem<F>,
+        key: &'static str,
+        expr: impl FnOnce(&mut VirtualCells<'_, F>) -> Expression<F>,
+    ) {
         meta.lookup(key, |meta| vec![(expr(meta), self.col)]);
     }
 }
@@ -92,16 +97,18 @@ pub struct InstructionChip<F: FieldExt> {
 
 impl<F: FieldExt> InstructionChip<F> {
     pub fn new(config: InstructionConfig<F>) -> InstructionChip<F> {
-        InstructionChip {
-            config
-        }
+        InstructionChip { config }
     }
 
-    pub fn add_inst(&self, layouter: &mut impl Layouter<F>, insts: &Vec<InstructionEntry>) -> Result<(), Error> {
+    pub fn add_inst(
+        &self,
+        layouter: &mut impl Layouter<F>,
+        insts: &Vec<InstructionTableEntry>,
+    ) -> Result<(), Error> {
         layouter.assign_table(
             || "init instructions",
             |mut table| {
-                for(i, v) in insts.iter().enumerate() {
+                for (i, v) in insts.iter().enumerate() {
                     table.assign_cell(
                         || "init instruction table",
                         self.config.col,

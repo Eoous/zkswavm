@@ -1,9 +1,9 @@
 use std::{cell::RefCell, rc::Rc};
 
 use halo2_proofs::{arithmetic::FieldExt, dev::MockProver, plonk::Error};
+use specs::{CompileTable, ExecutionTable};
 use wasmi::{ModuleRef, NopExternals};
 
-use crate::spec::{CompileTable, ExecutionTable};
 use crate::test::test_circuit::TestCircuit;
 
 const K: u32 = 5;

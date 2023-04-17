@@ -1,18 +1,14 @@
-use std::marker::PhantomData;
 use halo2_proofs::arithmetic::FieldExt;
 use halo2_proofs::plonk::{Advice, Column, Error};
 use num_bigint::BigUint;
+use specs::jtable::JumpTableEntry;
+use std::marker::PhantomData;
 
-use crate::{
-    spec::{
-        instruction::InstructionEntry,
-        jump::JumpEntry,
-    },
-    utils::{bn_to_field, Context},
-};
+use crate::circuits::Encode;
+use crate::utils::{bn_to_field, Context};
 
-impl JumpEntry {
-    pub fn encode(&self) -> BigUint {
+impl Encode for JumpTableEntry {
+    fn encode(&self) -> BigUint {
         todo!()
     }
 }
@@ -45,7 +41,11 @@ impl<F: FieldExt> JumpChip<F> {
         }
     }
 
-    pub fn add_jump(&self, ctx: &mut Context<'_, F>, jump: Box<JumpEntry>) -> Result<(), Error> {
+    pub fn add_jump(
+        &self,
+        ctx: &mut Context<'_, F>,
+        jump: Box<JumpTableEntry>,
+    ) -> Result<(), Error> {
         ctx.region.assign_advice_from_constant(
             || "jump table entry",
             self.config.col,

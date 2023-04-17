@@ -1,17 +1,17 @@
-use std::marker::PhantomData;
-
 use halo2_proofs::{
     arithmetic::FieldExt,
     plonk::{Advice, Column, ConstraintSystem, Expression, VirtualCells},
 };
 use num_bigint::BigUint;
+use specs::itable::OpcodeClass;
+use std::marker::PhantomData;
 
 use crate::circuits::event::EventCommonConfig;
 use crate::circuits::event::{EventOpcodeConfig, EventOpcodeConfigBuilder};
 use crate::circuits::instruction::InstructionConfig;
 use crate::circuits::jump::JumpConfig;
 use crate::circuits::memory::MemoryConfig;
-use crate::{constant, constant_from, cur, spec::instruction::OpcodeClass, utils::bn_to_field};
+use crate::{constant, constant_from, cur, utils::bn_to_field};
 
 pub struct ConstConfig<F: FieldExt> {
     vtype: Column<Advice>,

@@ -1,25 +1,25 @@
 use crate::{
-    event::EventEntry, init_memory::InitMemoryEntry, instruction::InstructionEntry,
-    jump::JumpEntry, memory::MemoryEntry,
+    etable::EventTableEntry, imtable::InitMemoryTableEntry, itable::InstructionTableEntry,
+    jtable::JumpTableEntry, mtable::MemoryTableEntry,
 };
 
-pub mod event;
-pub mod init_memory;
-pub mod instruction;
-pub mod jump;
-pub mod memory;
+pub mod etable;
+pub mod imtable;
+pub mod itable;
+pub mod jtable;
+pub mod mtable;
 pub mod step;
 pub mod types;
 
 #[derive(Default)]
 pub struct CompileTable {
-    pub instructions: Vec<InstructionEntry>,
-    pub init_memory: Vec<InitMemoryEntry>,
+    pub instructions: Vec<InstructionTableEntry>,
+    pub init_memory: Vec<InitMemoryTableEntry>,
 }
 
 #[derive(Default)]
 pub struct ExecutionTable {
-    pub event: Vec<EventEntry>,
-    pub memory: Vec<MemoryEntry>,
-    pub jump: Vec<JumpEntry>,
+    pub event: Vec<EventTableEntry>,
+    pub memory: Vec<MemoryTableEntry>,
+    pub jump: Vec<JumpTableEntry>,
 }

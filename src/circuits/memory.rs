@@ -3,12 +3,12 @@ use halo2_proofs::plonk::{Advice, Column, ConstraintSystem, Expression, VirtualC
 use halo2_proofs::poly::Rotation;
 use lazy_static::lazy_static;
 use num_bigint::BigUint;
+use specs::mtable::{AccessType, LocationType, MemoryTableEntry, VarType};
 use std::marker::PhantomData;
 
 use crate::circuits::memory_init::MemoryInitConfig;
 use crate::circuits::range::RangeConfig;
 use crate::circuits::row_diff::RowDiffConfig;
-use crate::spec::memory::{AccessType, LocationType, MemoryEntry, VarType};
 use crate::utils::bn_to_field;
 use crate::{constant, constant_from, cur, next, pre};
 

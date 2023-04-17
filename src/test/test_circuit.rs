@@ -1,12 +1,12 @@
 use std::marker::PhantomData;
 
 use halo2_proofs::{arithmetic::FieldExt, circuit::SimpleFloorPlanner, plonk::Circuit};
+use specs::{CompileTable, ExecutionTable};
 
 use crate::circuits::event::{EventChip, EventConfig};
 use crate::circuits::instruction::{InstructionChip, InstructionConfig};
 use crate::circuits::jump::JumpConfig;
 use crate::circuits::memory::MemoryConfig;
-use crate::spec::{CompileTable, ExecutionTable};
 
 const VAR_COLUMNS: usize = 50;
 

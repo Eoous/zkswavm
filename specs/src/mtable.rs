@@ -24,7 +24,7 @@ pub enum VarType {
 }
 
 #[derive(Clone)]
-pub struct MemoryEntry {
+pub struct MemoryTableEntry {
     pub eid: u64,
     pub emid: u64,
     pub mmid: u64,

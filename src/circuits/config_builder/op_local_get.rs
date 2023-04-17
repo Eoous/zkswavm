@@ -1,21 +1,17 @@
 use std::marker::PhantomData;
 
+use crate::circuits::event::EventCommonConfig;
+use crate::circuits::event::{EventOpcodeConfig, EventOpcodeConfigBuilder};
+use crate::circuits::instruction::InstructionConfig;
+use crate::circuits::jump::JumpConfig;
+use crate::circuits::memory::MemoryConfig;
+use crate::{constant, constant_from, cur, utils::bn_to_field};
 use halo2_proofs::{
     arithmetic::FieldExt,
     plonk::{Advice, Column, ConstraintSystem, Expression, VirtualCells},
 };
 use num_bigint::BigUint;
-
-use crate::{
-    constant, constant_from, cur,
-    spec::instruction::OpcodeClass,
-    utils::bn_to_field
-};
-use crate::circuits::event::{EventOpcodeConfig, EventOpcodeConfigBuilder};
-use crate::circuits::event::EventCommonConfig;
-use crate::circuits::instruction::InstructionConfig;
-use crate::circuits::jump::JumpConfig;
-use crate::circuits::memory::MemoryConfig;
+use specs::itable::OpcodeClass;
 
 pub struct LocalGetConfig<F: FieldExt> {
     offset: Column<Advice>,
@@ -76,8 +72,9 @@ impl<F: FieldExt> EventOpcodeConfigBuilder<F> for LocalGetConfigBuilder {
 impl<F: FieldExt> EventOpcodeConfig<F> for LocalGetConfig<F> {
     fn opcode(&self, meta: &mut VirtualCells<'_, F>) -> Expression<F> {
         // (1 << 64) + offset
-        constant!(bn_to_field(&(BigUint::from(OpcodeClass::LocalGet as u64) << 64)))
-            + cur!(meta, self.offset)
+        constant!(bn_to_field(
+            &(BigUint::from(OpcodeClass::LocalGet as u64) << 64)
+        )) + cur!(meta, self.offset)
     }
 
     fn sp_diff(&self, meta: &mut VirtualCells<'_, F>) -> Expression<F> {

@@ -1,6 +1,6 @@
 use num_bigint::BigUint;
 
-use crate::memory::VarType;
+use crate::mtable::VarType;
 
 pub enum OpcodeClass {
     LocalGet = 1,
@@ -41,11 +41,11 @@ impl Into<BigUint> for Opcode {
 }
 
 #[derive(Clone)]
-pub struct InstructionEntry {
+pub struct InstructionTableEntry {
     pub moid: u16,
     pub mmid: u16,
     pub fid: u16,
     pub bid: u16,
     pub iid: u16,
-    pub opcode: u64,
+    pub opcode: Opcode,
 }

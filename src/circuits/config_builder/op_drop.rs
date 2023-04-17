@@ -1,19 +1,15 @@
-use std::marker::PhantomData;
 use halo2_proofs::arithmetic::FieldExt;
 use halo2_proofs::plonk::{Advice, Column, ConstraintSystem, Expression, VirtualCells};
 use num_bigint::BigUint;
+use specs::itable::OpcodeClass;
+use std::marker::PhantomData;
 
 use crate::circuits::event::{EventCommonConfig, EventOpcodeConfig, EventOpcodeConfigBuilder};
 use crate::circuits::instruction::InstructionConfig;
 use crate::circuits::jump::JumpConfig;
 use crate::circuits::memory::MemoryConfig;
 use crate::utils::bn_to_field;
-use crate::{cur, constant};
-use crate::{
-    spec::{
-        instruction::OpcodeClass,
-    }
-};
+use crate::{constant, cur};
 
 pub struct DropConfig<F: FieldExt> {
     enable: Column<Advice>,
@@ -27,10 +23,10 @@ impl<F: FieldExt> EventOpcodeConfigBuilder<F> for DropConfigBuilder {
         meta: &mut ConstraintSystem<F>,
         common: &EventCommonConfig,
         opcode_bit: Column<Advice>,
-        cols: &mut impl Iterator<Item=Column<Advice>>,
+        cols: &mut impl Iterator<Item = Column<Advice>>,
         itable: &InstructionConfig<F>,
         mtable: &MemoryConfig<F>,
-        jtable: &JumpConfig<F>
+        jtable: &JumpConfig<F>,
     ) -> Box<dyn EventOpcodeConfig<F>> {
         Box::new(DropConfig {
             enable: opcode_bit,
