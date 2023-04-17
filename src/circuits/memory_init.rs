@@ -1,3 +1,4 @@
+use crate::circuits::utils::bn_to_field;
 use crate::circuits::Encode;
 use halo2_proofs::arithmetic::FieldExt;
 use halo2_proofs::circuit::Layouter;
@@ -6,8 +7,6 @@ use num_bigint::BigUint;
 use num_traits::{One, Zero};
 use specs::imtable::InitMemoryTableEntry;
 use std::marker::PhantomData;
-
-use crate::utils::bn_to_field;
 
 impl Encode for InitMemoryTableEntry {
     fn encode(&self) -> BigUint {

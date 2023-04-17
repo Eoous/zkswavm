@@ -9,10 +9,9 @@ use specs::itable::InstructionTableEntry;
 use std::marker::PhantomData;
 use wasmi::tracer::itable::IEntry;
 
-use crate::{
-    constant,
-    utils::{bn_to_field, Context},
-};
+use crate::circuits::utils::bn_to_field;
+use crate::constant;
+
 trait Encode {
     fn encode(&self) -> BigUint;
     fn encode_addr(&self) -> BigUint;

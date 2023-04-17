@@ -4,8 +4,8 @@ use num_bigint::BigUint;
 use specs::jtable::JumpTableEntry;
 use std::marker::PhantomData;
 
+use crate::circuits::utils::{bn_to_field, Context};
 use crate::circuits::Encode;
-use crate::utils::{bn_to_field, Context};
 
 impl Encode for JumpTableEntry {
     fn encode(&self) -> BigUint {

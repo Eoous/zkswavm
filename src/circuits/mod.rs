@@ -7,7 +7,7 @@ pub mod jump;
 pub mod memory;
 pub mod memory_init;
 pub mod range;
-pub mod row_diff;
+pub mod utils;
 
 trait Encode {
     fn encode(&self) -> BigUint;

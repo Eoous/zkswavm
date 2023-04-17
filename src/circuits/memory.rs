@@ -1,16 +1,15 @@
 use halo2_proofs::arithmetic::FieldExt;
-use halo2_proofs::plonk::{Advice, Column, ConstraintSystem, Expression, VirtualCells};
+use halo2_proofs::plonk::{Advice, Column, ConstraintSystem, Error, Expression, VirtualCells};
 use halo2_proofs::poly::Rotation;
 use lazy_static::lazy_static;
 use num_bigint::BigUint;
 use specs::mtable::{AccessType, LocationType, MemoryTableEntry, VarType};
 use std::marker::PhantomData;
-use wasmi::Error;
 
 use crate::circuits::memory_init::InitMemoryConfig;
 use crate::circuits::range::RangeConfig;
-use crate::circuits::row_diff::RowDiffConfig;
-use crate::utils::{bn_to_field, Context};
+use crate::circuits::utils::row_diff::RowDiffConfig;
+use crate::circuits::utils::{bn_to_field, Context};
 use crate::{constant, constant_from, cur, next, pre};
 
 lazy_static! {
@@ -29,8 +28,8 @@ pub struct MemoryConfig<F: FieldExt> {
     emid: RowDiffConfig<F>,
     mmid: RowDiffConfig<F>,
     offset: RowDiffConfig<F>,
-
     ltype: RowDiffConfig<F>,
+
     atype: Column<Advice>,
     vtype: Column<Advice>,
     value: Column<Advice>,
@@ -358,7 +357,7 @@ impl<F: FieldExt> MemoryChip<F> {
         ctx: &mut Context<'_, F>,
         entries: &Vec<MemoryTableEntry>,
     ) -> Result<(), Error> {
-        let mut last_entry = None;
+        let mut last_entry: Option<&MemoryTableEntry> = None;
         for entry in entries {
             macro_rules! row_diff_assign {
                 ($x: ident) => {

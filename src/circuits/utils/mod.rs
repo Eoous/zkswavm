@@ -1,13 +1,41 @@
 use std::io::Read;
-use halo2_proofs::{
-    arithmetic::FieldExt,
-    circuit::Region,
-};
+
+use halo2_proofs::{arithmetic::FieldExt, circuit::Region};
 use num_bigint::BigUint;
+
+pub mod row_diff;
 
 pub struct Context<'a, F: FieldExt> {
     pub region: Box<Region<'a, F>>,
     pub offset: usize,
+    records: Vec<usize>,
+}
+
+impl<'a, F: FieldExt> Context<'a, F> {
+    pub fn new(region: Region<'a, F>) -> Context<'a, F> {
+        Context {
+            region: Box::new(region),
+            offset: 0usize,
+            records: vec![],
+        }
+    }
+
+    pub fn next(&mut self) {
+        self.offset += 1;
+    }
+
+    pub fn reset(&mut self) {
+        self.offset = 0;
+        self.records.clear();
+    }
+
+    pub fn push(&mut self) {
+        self.records.push(self.offset);
+    }
+
+    pub fn pop(&mut self) {
+        self.offset = self.records.pop().unwrap();
+    }
 }
 
 pub fn bn_to_field<F: FieldExt>(bn: &BigUint) -> F {
@@ -15,7 +43,7 @@ pub fn bn_to_field<F: FieldExt>(bn: &BigUint) -> F {
     bytes.resize(64, 0);
     let mut bytes = &bytes[..];
 
-    let mut compressed = [0u8;64];
+    let mut compressed = [0u8; 64];
     bytes.read_exact(&mut compressed[..]).unwrap();
     F::from_bytes_wide(&mut compressed)
 }

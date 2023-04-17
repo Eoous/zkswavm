@@ -11,7 +11,8 @@ use crate::circuits::event::{EventOpcodeConfig, EventOpcodeConfigBuilder};
 use crate::circuits::instruction::InstructionConfig;
 use crate::circuits::jump::JumpConfig;
 use crate::circuits::memory::MemoryConfig;
-use crate::{constant, constant_from, cur, utils::bn_to_field};
+use crate::circuits::utils::bn_to_field;
+use crate::{constant, constant_from, cur};
 
 pub struct ConstConfig<F: FieldExt> {
     vtype: Column<Advice>,

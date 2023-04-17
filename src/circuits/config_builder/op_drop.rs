@@ -8,7 +8,7 @@ use crate::circuits::event::{EventCommonConfig, EventOpcodeConfig, EventOpcodeCo
 use crate::circuits::instruction::InstructionConfig;
 use crate::circuits::jump::JumpConfig;
 use crate::circuits::memory::MemoryConfig;
-use crate::utils::bn_to_field;
+use crate::circuits::utils::bn_to_field;
 use crate::{constant, cur};
 
 pub struct DropConfig<F: FieldExt> {
