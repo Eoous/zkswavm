@@ -20,7 +20,7 @@ pub struct JumpConfig<F: FieldExt> {
 }
 
 impl<F: FieldExt> JumpConfig<F> {
-    pub fn new(cols: &mut impl Iterator<Item = Column<Advice>>) -> JumpConfig<F> {
+    pub fn configure(cols: &mut impl Iterator<Item = Column<Advice>>) -> JumpConfig<F> {
         JumpConfig {
             col: cols.next().unwrap(),
             _mark: PhantomData,

@@ -47,9 +47,9 @@ impl<F: FieldExt> Circuit<F> for TestCircuit<F> {
     fn configure(meta: &mut halo2_proofs::plonk::ConstraintSystem<F>) -> Self::Config {
         let mut cols = [(); VAR_COLUMNS].map(|_| meta.advice_column()).into_iter();
         let itable = InstructionConfig::new(meta);
-        let jtable = JumpConfig::new(&mut cols);
+        let jtable = JumpConfig::configure(&mut cols);
         let mtable = MemoryConfig::new(meta, &mut cols);
-        let etable = EventConfig::new(meta, &mut cols, &itable, &mtable, &jtable);
+        let etable = EventConfig::configure(meta, &mut cols, &itable, &mtable, &jtable);
 
         Self::Config {
             etable,

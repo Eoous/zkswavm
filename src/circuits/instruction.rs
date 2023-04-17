@@ -103,12 +103,12 @@ impl<F: FieldExt> InstructionChip<F> {
     pub fn add_inst(
         &self,
         layouter: &mut impl Layouter<F>,
-        insts: &Vec<InstructionTableEntry>,
+        instructions: &Vec<InstructionTableEntry>,
     ) -> Result<(), Error> {
         layouter.assign_table(
-            || "init instructions",
+            || "itable",
             |mut table| {
-                for (i, v) in insts.iter().enumerate() {
+                for (i, v) in instructions.iter().enumerate() {
                     table.assign_cell(
                         || "init instruction table",
                         self.config.col,

@@ -23,14 +23,15 @@ impl Encode for InitMemoryTableEntry {
 
 const MEMORY_INIT_TABLE_COLUMNS: usize = 3;
 
-pub struct MemoryInitConfig<F: FieldExt> {
+#[derive(Clone)]
+pub struct InitMemoryConfig<F: FieldExt> {
     col: TableColumn,
     _mark: PhantomData<F>,
 }
 
-impl<F: FieldExt> MemoryInitConfig<F> {
-    pub fn new(col: TableColumn) -> MemoryInitConfig<F> {
-        MemoryInitConfig {
+impl<F: FieldExt> InitMemoryConfig<F> {
+    pub fn configure(col: TableColumn) -> InitMemoryConfig<F> {
+        InitMemoryConfig {
             col,
             _mark: PhantomData,
         }
@@ -58,7 +59,7 @@ impl<F: FieldExt> MemoryInitConfig<F> {
 }
 
 pub struct MemoryInitChip<F: FieldExt> {
-    config: MemoryInitConfig<F>,
+    config: InitMemoryConfig<F>,
     _phantom: PhantomData<F>,
 }
 

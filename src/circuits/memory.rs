@@ -5,11 +5,12 @@ use lazy_static::lazy_static;
 use num_bigint::BigUint;
 use specs::mtable::{AccessType, LocationType, MemoryTableEntry, VarType};
 use std::marker::PhantomData;
+use wasmi::Error;
 
-use crate::circuits::memory_init::MemoryInitConfig;
+use crate::circuits::memory_init::InitMemoryConfig;
 use crate::circuits::range::RangeConfig;
 use crate::circuits::row_diff::RowDiffConfig;
-use crate::utils::bn_to_field;
+use crate::utils::{bn_to_field, Context};
 use crate::{constant, constant_from, cur, next, pre};
 
 lazy_static! {
@@ -25,7 +26,7 @@ lazy_static! {
 #[derive(Clone)]
 pub struct MemoryConfig<F: FieldExt> {
     eid: RowDiffConfig<F>,
-    emid: Column<Advice>,
+    emid: RowDiffConfig<F>,
     mmid: RowDiffConfig<F>,
     offset: RowDiffConfig<F>,
 
@@ -44,16 +45,17 @@ impl<F: FieldExt> MemoryConfig<F> {
         meta: &mut ConstraintSystem<F>,
         cols: &mut impl Iterator<Item = Column<Advice>>,
     ) -> MemoryConfig<F> {
-        let ltype = RowDiffConfig::configure("location type", meta, cols);
-        let mmid = RowDiffConfig::configure("mmid", meta, cols);
-        let offset = RowDiffConfig::configure("mm offset", meta, cols);
-        let eid = RowDiffConfig::configure("eid", meta, cols);
+        let emid = RowDiffConfig::configure("memory emid", meta, cols);
+        let ltype = RowDiffConfig::configure("memory ltype", meta, cols);
+        let mmid = RowDiffConfig::configure("memory mmid", meta, cols);
+        let offset = RowDiffConfig::configure("memory offset", meta, cols);
+        let eid = RowDiffConfig::configure("memory eid", meta, cols);
+
         let value = cols.next().unwrap();
         let atype = cols.next().unwrap();
         let vtype = cols.next().unwrap();
         let enable = cols.next().unwrap();
         let same_location = cols.next().unwrap();
-        let emid = cols.next().unwrap();
 
         MemoryConfig {
             ltype,
@@ -72,7 +74,7 @@ impl<F: FieldExt> MemoryConfig<F> {
 
     fn encode_for_lookup(&self, meta: &mut VirtualCells<'_, F>) -> Expression<F> {
         self.eid.data(meta) * constant!(bn_to_field(&EID_SHIFT))
-            + cur!(meta, self.emid) * constant!(bn_to_field(&EMID_SHIFT))
+            + self.emid.data(meta) * constant!(bn_to_field(&EMID_SHIFT))
             + self.mmid.data(meta) * constant!(bn_to_field(&MMID_SHIFT))
             + self.offset.data(meta) * constant!(bn_to_field(&OFFSET_SHIFT))
             + self.ltype.data(meta) * constant!(bn_to_field(&LOC_TYPE_SHIFT))
@@ -175,7 +177,7 @@ impl<F: FieldExt> MemoryConfig<F> {
         meta: &mut ConstraintSystem<F>,
         cols: &mut impl Iterator<Item = Column<Advice>>,
         range: &RangeConfig<F>,
-        memory_init: &MemoryInitConfig<F>,
+        memory_init: &InitMemoryConfig<F>,
     ) -> MemoryConfig<F> {
         let memory = Self::new(meta, cols);
 
@@ -235,8 +237,8 @@ impl<F: FieldExt> MemoryConfig<F> {
         range.configure_in_range(meta, "offset in range", |meta| self.offset.data(meta));
         range.configure_in_range(meta, "eid in range", |meta| self.eid.data(meta));
 
-        range.configure_in_range(meta, "emid in range", |meta| cur!(meta, self.emid));
-        range.configure_in_range(meta, "vtype in range", |meta| cur!(meta, self.vtype));
+        range.configure_in_range(meta, "emid in range", |meta| self.emid.data(meta));
+        range.configure_in_range(meta, "vtype in range", |meta| self.emid.data(meta));
 
         self
     }
@@ -265,7 +267,7 @@ impl<F: FieldExt> MemoryConfig<F> {
             self.is_enable(meta)
                 * self.is_same_location(meta)
                 * self.eid.is_same(meta)
-                * (cur!(meta, self.emid) - pre!(meta, self.emid))
+                * self.emid.diff(meta)
         });
 
         self
@@ -274,16 +276,20 @@ impl<F: FieldExt> MemoryConfig<F> {
     fn configure_rule(
         &self,
         meta: &mut ConstraintSystem<F>,
-        memory_init: &MemoryInitConfig<F>,
+        memory_init: &InitMemoryConfig<F>,
     ) -> &MemoryConfig<F> {
-        meta.create_gate("read after write", |meta| {
+        meta.create_gate("memory read after write", |meta| {
             vec![
                 self.is_enable(meta) * self.is_read_not_bit(meta) * self.diff(meta, self.value),
                 self.is_enable(meta) * self.is_read_not_bit(meta) * self.diff(meta, self.vtype),
             ]
         });
 
-        meta.create_gate("stack first line", |meta| {
+        meta.create_gate("memory emid unique", |meta| {
+            vec![self.is_enable(meta) * self.is_same_location(meta) * self.emid.is_same(meta)]
+        });
+
+        meta.create_gate("memory stack first line", |meta| {
             vec![
                 self.is_enable(meta)
                     * (self.is_same_location(meta) - Expression::Constant(F::one()))
@@ -293,7 +299,7 @@ impl<F: FieldExt> MemoryConfig<F> {
         });
 
         // first line in heap
-        memory_init.configure_in_table(meta, "heap first line", |meta| {
+        memory_init.configure_in_table(meta, "memory heap first line", |meta| {
             self.is_enable(meta)
                 * (Expression::Constant(F::one()) - self.is_same_location(meta))
                 * self.is_heap(meta)
@@ -331,5 +337,94 @@ impl<F: FieldExt> MemoryConfig<F> {
 
     fn is_enable(&self, meta: &mut VirtualCells<F>) -> Expression<F> {
         cur!(meta, self.enable)
+    }
+}
+
+pub struct MemoryChip<F: FieldExt> {
+    config: MemoryConfig<F>,
+    _phantom: PhantomData<F>,
+}
+
+impl<F: FieldExt> MemoryChip<F> {
+    pub fn new(config: MemoryConfig<F>) -> MemoryChip<F> {
+        MemoryChip {
+            config,
+            _phantom: PhantomData,
+        }
+    }
+
+    pub fn assign(
+        &self,
+        ctx: &mut Context<'_, F>,
+        entries: &Vec<MemoryTableEntry>,
+    ) -> Result<(), Error> {
+        let mut last_entry = None;
+        for entry in entries {
+            macro_rules! row_diff_assign {
+                ($x: ident) => {
+                    self.config.$x.assign(
+                        ctx,
+                        (entry.$x as u64).into(),
+                        ((entry.$x as u64)
+                            - last_entry.as_ref().map(|x| x.$x as u64).unwrap_or(0u64))
+                        .into(),
+                    )?;
+                };
+            }
+
+            row_diff_assign!(eid);
+            row_diff_assign!(emid);
+            row_diff_assign!(mmid);
+            row_diff_assign!(offset);
+            row_diff_assign!(ltype);
+
+            ctx.region.assign_advice(
+                || "memory atype",
+                self.config.atype,
+                ctx.offset,
+                || Ok((entry.atype as u64).into()),
+            )?;
+
+            ctx.region.assign_advice(
+                || "memory vtype",
+                self.config.vtype,
+                ctx.offset,
+                || Ok((entry.vtype as u64).into()),
+            )?;
+
+            ctx.region.assign_advice(
+                || "memory value",
+                self.config.value,
+                ctx.offset,
+                || Ok((entry.value as u64).into()),
+            )?;
+
+            ctx.region.assign_advice(
+                || "memory enable",
+                self.config.enable,
+                ctx.offset,
+                || Ok(F::one()),
+            )?;
+
+            ctx.region.assign_advice(
+                || "memory same_location",
+                self.config.same_location,
+                ctx.offset,
+                || {
+                    Ok(last_entry.as_ref().map_or(F::zero(), |last_entry| {
+                        if last_entry.is_same_location(&entry) {
+                            F::one()
+                        } else {
+                            F::zero()
+                        }
+                    }))
+                },
+            )?;
+
+            last_entry = Some(entry);
+            ctx.next();
+        }
+
+        Ok(())
     }
 }

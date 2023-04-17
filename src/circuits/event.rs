@@ -1,16 +1,14 @@
-use std::marker::PhantomData;
 use halo2_proofs::arithmetic::FieldExt;
 use halo2_proofs::plonk::{Advice, Column, ConstraintSystem, Expression, VirtualCells};
+use std::marker::PhantomData;
 
-use crate::circuits::instruction::{encode_inst_expr, InstructionConfig};
-use crate::{
-    cur, pre, next, constant, constant_from
-};
-use crate::circuits::jump::JumpConfig;
-use crate::circuits::memory::MemoryConfig;
 use crate::circuits::config_builder::op_const::ConstConfigBuilder;
 use crate::circuits::config_builder::op_drop::DropConfigBuilder;
 use crate::circuits::config_builder::op_local_get::LocalGetConfigBuilder;
+use crate::circuits::instruction::{encode_inst_expr, InstructionConfig};
+use crate::circuits::jump::JumpConfig;
+use crate::circuits::memory::MemoryConfig;
+use crate::{constant, constant_from, cur, next, pre};
 
 pub trait EventOpcodeConfigBuilder<F: FieldExt> {
     fn configure(
@@ -50,7 +48,7 @@ pub struct EventConfig<F: FieldExt> {
 }
 
 impl<F: FieldExt> EventConfig<F> {
-    pub fn new<'a>(
+    pub fn configure(
         meta: &mut ConstraintSystem<F>,
         cols: &mut impl Iterator<Item = Column<Advice>>,
         inst_config: &InstructionConfig<F>,
@@ -102,11 +100,7 @@ impl<F: FieldExt> EventConfig<F> {
             })
         ];
 
-        configure![
-            ConstConfigBuilder,
-            DropConfigBuilder,
-            LocalGetConfigBuilder
-        ];
+        configure![ConstConfigBuilder, DropConfigBuilder, LocalGetConfigBuilder];
 
         meta.create_gate("opcode consistent", |meta| {
             let mut acc = constant_from!(0u64);
@@ -142,8 +136,9 @@ impl<F: FieldExt> EventConfig<F> {
                 opcode_bitmaps
                     .iter()
                     .map(|x| cur!(meta, *x))
-                    .reduce(|acc, x| acc + x).unwrap()
-                    - constant_from!(1u64)
+                    .reduce(|acc, x| acc + x)
+                    .unwrap()
+                    - constant_from!(1u64),
             ]
         });
 
@@ -151,20 +146,22 @@ impl<F: FieldExt> EventConfig<F> {
             // eid.cur - eid.pre - 1 == 0
             vec![
                 cur!(meta, common_config.enable)
-                    * (cur!(meta, common_config.eid) - pre!(meta, common_config.eid) - constant_from!(1u64))
+                    * (cur!(meta, common_config.eid)
+                        - pre!(meta, common_config.eid)
+                        - constant_from!(1u64)),
             ]
         });
 
         inst_config.configure_in_table(meta, "instruction in table", |meta| {
             cur!(meta, enable)
                 * encode_inst_expr(
-                cur!(meta, common_config.moid),
-                cur!(meta, common_config.mmid),
-                cur!(meta, common_config.fid),
-                cur!(meta, common_config.bid),
-                cur!(meta, common_config.iid),
-                cur!(meta, common_config.opcode)
-            )
+                    cur!(meta, common_config.moid),
+                    cur!(meta, common_config.mmid),
+                    cur!(meta, common_config.fid),
+                    cur!(meta, common_config.bid),
+                    cur!(meta, common_config.iid),
+                    cur!(meta, common_config.opcode),
+                )
         });
 
         EventConfig {
@@ -177,7 +174,7 @@ impl<F: FieldExt> EventConfig<F> {
 
 pub struct EventChip<F: FieldExt> {
     config: EventConfig<F>,
-    _phantom: PhantomData<F>
+    _phantom: PhantomData<F>,
 }
 
 impl<F: FieldExt> EventChip<F> {
