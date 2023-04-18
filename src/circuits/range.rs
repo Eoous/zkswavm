@@ -3,6 +3,7 @@ use halo2_proofs::arithmetic::FieldExt;
 use halo2_proofs::circuit::{Layouter};
 use halo2_proofs::plonk::{ConstraintSystem, Error, Expression, TableColumn, VirtualCells};
 
+#[derive(Clone)]
 pub struct RangeConfig<F: FieldExt> {
     cols: [TableColumn; 1],
     _mark: PhantomData<F>,
