@@ -1,19 +1,25 @@
 use std::marker::PhantomData;
 
 use halo2_proofs::{arithmetic::FieldExt, circuit::SimpleFloorPlanner, plonk::Circuit};
+use specs::itable::OpcodeClass::Const;
 use specs::{CompileTable, ExecutionTable};
 
 use crate::circuits::event::{EventChip, EventConfig};
 use crate::circuits::instruction::{InstructionChip, InstructionConfig};
 use crate::circuits::jump::JumpConfig;
-use crate::circuits::memory::MemoryConfig;
+use crate::circuits::memory::{MemoryChip, MemoryConfig};
+use crate::circuits::memory_init::InitMemoryConfig;
+use crate::circuits::range::{RangeChip, RangeConfig};
+use crate::circuits::utils::Context;
 
 const VAR_COLUMNS: usize = 50;
 
 #[derive(Clone)]
 pub struct TestCircuitConfig<F: FieldExt> {
-    etable: EventConfig<F>,
+    rtable: RangeConfig<F>,
+    imtable: InitMemoryConfig<F>,
     itable: InstructionConfig<F>,
+    etable: EventConfig<F>,
     jtable: JumpConfig<F>,
     mtable: MemoryConfig<F>,
 }
@@ -46,12 +52,16 @@ impl<F: FieldExt> Circuit<F> for TestCircuit<F> {
 
     fn configure(meta: &mut halo2_proofs::plonk::ConstraintSystem<F>) -> Self::Config {
         let mut cols = [(); VAR_COLUMNS].map(|_| meta.advice_column()).into_iter();
-        let itable = InstructionConfig::new(meta);
+        let rtable = RangeConfig::configure([meta.lookup_table_column()]);
+        let imtable = InitMemoryConfig::configure(meta.lookup_table_column());
+        let itable = InstructionConfig::configure(meta.lookup_table_column());
         let jtable = JumpConfig::configure(&mut cols);
-        let mtable = MemoryConfig::new(meta, &mut cols);
+        let mtable = MemoryConfig::configure(meta, &mut cols, &rtable, &imtable);
         let etable = EventConfig::configure(meta, &mut cols, &itable, &mtable, &jtable);
 
         Self::Config {
+            rtable,
+            imtable,
             etable,
             itable,
             jtable,
@@ -65,9 +75,21 @@ impl<F: FieldExt> Circuit<F> for TestCircuit<F> {
         mut layouter: impl halo2_proofs::circuit::Layouter<F>,
     ) -> Result<(), halo2_proofs::plonk::Error> {
         let echip = EventChip::new(config.etable);
+        let rchip = RangeChip::new(config.rtable);
         let ichip = InstructionChip::new(config.itable);
+        let mchip = MemoryChip::new(config.mtable);
 
-        ichip.add_inst(&mut layouter, &self.compile_tables.instructions)?;
+        rchip.init(&mut layouter, 16usize)?;
+        ichip.assign(&mut layouter, &self.compile_tables.instructions)?;
+
+        layouter.assign_region(
+            || "memory",
+            |region| {
+                let mut ctx = Context::new(region);
+                mchip.assign(&mut ctx, &self.execution_tables.memory)?;
+                Ok(())
+            },
+        )?;
 
         Ok(())
     }

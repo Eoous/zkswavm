@@ -72,9 +72,9 @@ pub struct InstructionConfig<F: FieldExt> {
 }
 
 impl<F: FieldExt> InstructionConfig<F> {
-    pub fn new(meta: &mut ConstraintSystem<F>) -> InstructionConfig<F> {
+    pub fn configure(col: TableColumn) -> InstructionConfig<F> {
         InstructionConfig {
-            col: meta.lookup_table_column(),
+            col,
             _mark: PhantomData,
         }
     }
@@ -99,7 +99,7 @@ impl<F: FieldExt> InstructionChip<F> {
         InstructionChip { config }
     }
 
-    pub fn add_inst(
+    pub fn assign(
         &self,
         layouter: &mut impl Layouter<F>,
         instructions: &Vec<InstructionTableEntry>,
