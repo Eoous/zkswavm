@@ -1,3 +1,5 @@
+extern crate core;
+
 pub mod circuits;
 pub mod runtime;
 

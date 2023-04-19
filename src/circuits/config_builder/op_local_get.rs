@@ -5,15 +5,18 @@ use crate::circuits::event::{EventOpcodeConfig, EventOpcodeConfigBuilder};
 use crate::circuits::instruction::InstructionConfig;
 use crate::circuits::jump::JumpConfig;
 use crate::circuits::memory::MemoryConfig;
-use crate::circuits::utils::bn_to_field;
+use crate::circuits::utils::{bn_to_field, Context};
 use crate::{constant, constant_from, cur};
 
+use halo2_proofs::plonk::Error;
 use halo2_proofs::{
     arithmetic::FieldExt,
     plonk::{Advice, Column, ConstraintSystem, Expression, VirtualCells},
 };
 use num_bigint::BigUint;
+use specs::etable::EventTableEntry;
 use specs::itable::OpcodeClass;
+use specs::step::StepInfo;
 
 pub struct LocalGetConfig<F: FieldExt> {
     offset: Column<Advice>,
@@ -81,5 +84,18 @@ impl<F: FieldExt> EventOpcodeConfig<F> for LocalGetConfig<F> {
 
     fn sp_diff(&self, meta: &mut VirtualCells<'_, F>) -> Expression<F> {
         constant_from!(1u64)
+    }
+
+    fn assign(&self, ctx: &mut Context<'_, F>, entry: &EventTableEntry) -> Result<(), Error> {
+        match entry.step_info {
+            StepInfo::GetLocal { depth, value } => todo!(),
+            _ => unreachable!(),
+        }
+
+        Ok(())
+    }
+
+    fn opcode_class(&self) -> OpcodeClass {
+        todo!()
     }
 }

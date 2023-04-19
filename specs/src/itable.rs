@@ -1,7 +1,9 @@
+use crate::itable::OpcodeClass::{Const, Return};
 use num_bigint::BigUint;
 
 use crate::mtable::VarType;
 
+#[derive(Clone, Copy, Debug, Ord, PartialOrd, Eq, PartialEq)]
 pub enum OpcodeClass {
     LocalGet = 1,
     Const,
@@ -37,6 +39,17 @@ impl Into<BigUint> for Opcode {
 
         assert!(bn < BigUint::from(1u64) << 128usize);
         bn
+    }
+}
+
+impl Into<OpcodeClass> for Opcode {
+    fn into(self) -> OpcodeClass {
+        match self {
+            Opcode::LocalGet { .. } => OpcodeClass::LocalGet,
+            Opcode::Const { .. } => OpcodeClass::Const,
+            Opcode::Drop { .. } => OpcodeClass::Drop,
+            Opcode::Return { .. } => OpcodeClass::Return,
+        }
     }
 }
 

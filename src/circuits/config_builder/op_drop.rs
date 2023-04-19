@@ -1,6 +1,7 @@
 use halo2_proofs::arithmetic::FieldExt;
-use halo2_proofs::plonk::{Advice, Column, ConstraintSystem, Expression, VirtualCells};
+use halo2_proofs::plonk::{Advice, Column, ConstraintSystem, Error, Expression, VirtualCells};
 use num_bigint::BigUint;
+use specs::etable::EventTableEntry;
 use specs::itable::OpcodeClass;
 use std::marker::PhantomData;
 
@@ -8,7 +9,7 @@ use crate::circuits::event::{EventCommonConfig, EventOpcodeConfig, EventOpcodeCo
 use crate::circuits::instruction::InstructionConfig;
 use crate::circuits::jump::JumpConfig;
 use crate::circuits::memory::MemoryConfig;
-use crate::circuits::utils::bn_to_field;
+use crate::circuits::utils::{bn_to_field, Context};
 use crate::{constant, cur};
 
 pub struct DropConfig<F: FieldExt> {
@@ -46,5 +47,13 @@ impl<F: FieldExt> EventOpcodeConfig<F> for DropConfig<F> {
     fn sp_diff(&self, meta: &mut VirtualCells<'_, F>) -> Expression<F> {
         // -1 * enable.cur
         constant!(-F::one()) * cur!(meta, self.enable)
+    }
+
+    fn assign(&self, ctx: &mut Context<'_, F>, entry: &EventTableEntry) -> Result<(), Error> {
+        Ok(())
+    }
+
+    fn opcode_class(&self) -> OpcodeClass {
+        OpcodeClass::Drop
     }
 }

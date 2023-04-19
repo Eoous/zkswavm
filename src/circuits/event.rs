@@ -1,5 +1,7 @@
 use halo2_proofs::arithmetic::FieldExt;
-use halo2_proofs::plonk::{Advice, Column, ConstraintSystem, Expression, VirtualCells};
+use halo2_proofs::plonk::{Advice, Column, ConstraintSystem, Error, Expression, VirtualCells};
+use specs::etable::EventTableEntry;
+use specs::itable::{Opcode, OpcodeClass};
 use std::marker::PhantomData;
 
 use crate::circuits::config_builder::op_const::ConstConfigBuilder;
@@ -8,6 +10,7 @@ use crate::circuits::config_builder::op_local_get::LocalGetConfigBuilder;
 use crate::circuits::instruction::{encode_inst_expr, InstructionConfig};
 use crate::circuits::jump::JumpConfig;
 use crate::circuits::memory::MemoryConfig;
+use crate::circuits::utils::Context;
 use crate::{constant, constant_from, cur, next, pre};
 
 pub trait EventOpcodeConfigBuilder<F: FieldExt> {
@@ -25,6 +28,8 @@ pub trait EventOpcodeConfigBuilder<F: FieldExt> {
 pub trait EventOpcodeConfig<F: FieldExt> {
     fn opcode(&self, meta: &mut VirtualCells<'_, F>) -> Expression<F>;
     fn sp_diff(&self, meta: &mut VirtualCells<'_, F>) -> Expression<F>;
+    fn assign(&self, ctx: &mut Context<'_, F>, entry: &EventTableEntry) -> Result<(), Error>;
+    fn opcode_class(&self) -> OpcodeClass;
 }
 
 #[derive(Clone)]
