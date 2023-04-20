@@ -232,12 +232,12 @@ impl<F: FieldExt> MemoryConfig<F> {
         meta: &mut ConstraintSystem<F>,
         range: &RangeConfig<F>,
     ) -> &MemoryConfig<F> {
-        range.configure_in_range(meta, "mmid in range", |meta| self.mmid.data(meta));
-        range.configure_in_range(meta, "offset in range", |meta| self.offset.data(meta));
-        range.configure_in_range(meta, "eid in range", |meta| self.eid.data(meta));
+        range.configure_in_common_range(meta, "mmid in range", |meta| self.mmid.data(meta));
+        range.configure_in_common_range(meta, "offset in range", |meta| self.offset.data(meta));
+        range.configure_in_common_range(meta, "eid in range", |meta| self.eid.data(meta));
 
-        range.configure_in_range(meta, "emid in range", |meta| self.emid.data(meta));
-        range.configure_in_range(meta, "vtype in range", |meta| self.emid.data(meta));
+        range.configure_in_common_range(meta, "emid in range", |meta| self.emid.data(meta));
+        range.configure_in_common_range(meta, "vtype in range", |meta| self.emid.data(meta));
 
         self
     }
@@ -247,22 +247,22 @@ impl<F: FieldExt> MemoryConfig<F> {
         meta: &mut ConstraintSystem<F>,
         range: &RangeConfig<F>,
     ) -> &MemoryConfig<F> {
-        range.configure_in_range(meta, "ltype sort", |meta| {
+        range.configure_in_common_range(meta, "ltype sort", |meta| {
             self.is_enable(meta) * self.ltype.diff(meta)
         });
-        range.configure_in_range(meta, "mmid sort", |meta| {
+        range.configure_in_common_range(meta, "mmid sort", |meta| {
             self.is_enable(meta) * self.ltype.is_same(meta) * self.mmid.diff(meta)
         });
-        range.configure_in_range(meta, "offset sort", |meta| {
+        range.configure_in_common_range(meta, "offset sort", |meta| {
             self.is_enable(meta)
                 * self.ltype.is_same(meta)
                 * self.mmid.is_same(meta)
                 * self.offset.is_same(meta)
         });
-        range.configure_in_range(meta, "eid sort", |meta| {
+        range.configure_in_common_range(meta, "eid sort", |meta| {
             self.is_enable(meta) * self.is_same_location(meta) * self.eid.diff(meta)
         });
-        range.configure_in_range(meta, "emid sort", |meta| {
+        range.configure_in_common_range(meta, "emid sort", |meta| {
             self.is_enable(meta)
                 * self.is_same_location(meta)
                 * self.eid.is_same(meta)

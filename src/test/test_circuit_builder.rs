@@ -6,7 +6,7 @@ use wasmi::{ModuleRef, NopExternals};
 
 use crate::test::test_circuit::TestCircuit;
 
-const K: u32 = 5;
+const K: u32 = 17;
 
 pub fn run_test_circuit<F: FieldExt>(
     compile_table: CompileTable,
