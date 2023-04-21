@@ -75,19 +75,19 @@ impl<F: FieldExt> Circuit<F> for TestCircuit<F> {
         config: Self::Config,
         mut layouter: impl halo2_proofs::circuit::Layouter<F>,
     ) -> Result<(), halo2_proofs::plonk::Error> {
-        let echip = EventChip::new(config.event);
-        let rchip = RangeChip::new(config.range);
-        let ichip = InstructionChip::new(config.instruction);
-        let mchip = MemoryChip::new(config.memory);
+        let event = EventChip::new(config.event);
+        let range = RangeChip::new(config.range);
+        let instruction = InstructionChip::new(config.instruction);
+        let memory = MemoryChip::new(config.memory);
 
-        rchip.init(&mut layouter, 16usize)?;
-        ichip.assign(&mut layouter, &self.compile_tables.instructions)?;
+        range.init(&mut layouter, 16usize)?;
+        instruction.assign(&mut layouter, &self.compile_tables.instructions)?;
 
         layouter.assign_region(
             || "memory",
             |region| {
                 let mut ctx = Context::new(region);
-                mchip.assign(&mut ctx, &self.execution_tables.memory)?;
+                memory.assign(&mut ctx, &self.execution_tables.memory)?;
                 Ok(())
             },
         )?;
