@@ -16,12 +16,12 @@ const VAR_COLUMNS: usize = 50;
 
 #[derive(Clone)]
 pub struct TestCircuitConfig<F: FieldExt> {
-    rtable: RangeConfig<F>,
-    imtable: InitMemoryConfig<F>,
-    itable: InstructionConfig<F>,
-    etable: EventConfig<F>,
-    jtable: JumpConfig<F>,
-    mtable: MemoryConfig<F>,
+    range: RangeConfig<F>,
+    init_memory: InitMemoryConfig<F>,
+    instruction: InstructionConfig<F>,
+    event: EventConfig<F>,
+    jump: JumpConfig<F>,
+    memory: MemoryConfig<F>,
 }
 
 #[derive(Default)]
@@ -52,21 +52,21 @@ impl<F: FieldExt> Circuit<F> for TestCircuit<F> {
 
     fn configure(meta: &mut halo2_proofs::plonk::ConstraintSystem<F>) -> Self::Config {
         let mut cols = [(); VAR_COLUMNS].map(|_| meta.advice_column()).into_iter();
-        let rtable =
+        let range =
             RangeConfig::configure([meta.lookup_table_column(), meta.lookup_table_column()]);
-        let imtable = InitMemoryConfig::configure(meta.lookup_table_column());
-        let itable = InstructionConfig::configure(meta.lookup_table_column());
-        let jtable = JumpConfig::configure(&mut cols);
-        let mtable = MemoryConfig::configure(meta, &mut cols, &rtable, &imtable);
-        let etable = EventConfig::configure(meta, &mut cols, &itable, &mtable, &jtable);
+        let init_memory = InitMemoryConfig::configure(meta.lookup_table_column());
+        let instruction = InstructionConfig::configure(meta.lookup_table_column());
+        let jump = JumpConfig::configure(&mut cols);
+        let memory = MemoryConfig::configure(meta, &mut cols, &range, &init_memory);
+        let event = EventConfig::configure(meta, &mut cols, &instruction, &memory, &jump);
 
         Self::Config {
-            rtable,
-            imtable,
-            etable,
-            itable,
-            jtable,
-            mtable,
+            range,
+            init_memory,
+            event,
+            instruction,
+            jump,
+            memory,
         }
     }
 
@@ -75,10 +75,10 @@ impl<F: FieldExt> Circuit<F> for TestCircuit<F> {
         config: Self::Config,
         mut layouter: impl halo2_proofs::circuit::Layouter<F>,
     ) -> Result<(), halo2_proofs::plonk::Error> {
-        let echip = EventChip::new(config.etable);
-        let rchip = RangeChip::new(config.rtable);
-        let ichip = InstructionChip::new(config.itable);
-        let mchip = MemoryChip::new(config.mtable);
+        let echip = EventChip::new(config.event);
+        let rchip = RangeChip::new(config.range);
+        let ichip = InstructionChip::new(config.instruction);
+        let mchip = MemoryChip::new(config.memory);
 
         rchip.init(&mut layouter, 16usize)?;
         ichip.assign(&mut layouter, &self.compile_tables.instructions)?;
