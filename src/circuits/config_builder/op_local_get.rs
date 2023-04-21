@@ -96,6 +96,6 @@ impl<F: FieldExt> EventOpcodeConfig<F> for LocalGetConfig<F> {
     }
 
     fn opcode_class(&self) -> OpcodeClass {
-        todo!()
+        OpcodeClass::LocalGet
     }
 }
