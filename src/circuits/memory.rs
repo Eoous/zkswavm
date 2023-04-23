@@ -40,6 +40,9 @@ pub struct MemoryConfig<F: FieldExt> {
 }
 
 impl<F: FieldExt> MemoryConfig<F> {
+    /// RowDiffConfig needs 3 cols. 3 * 5 + 5 = 20
+    ///
+    /// Now MemoryConfig needs 20 cols.
     pub fn new(
         meta: &mut ConstraintSystem<F>,
         cols: &mut impl Iterator<Item = Column<Advice>>,
@@ -195,6 +198,8 @@ impl<F: FieldExt> MemoryConfig<F> {
             let cur = cur!(meta, self.enable);
             let next = next!(meta, self.enable);
 
+            // next * (cur - 1) == 0
+            // cur  * (cur - 1) == 0
             vec![
                 next * (cur.clone() - Expression::Constant(F::one())),
                 cur.clone() * (cur.clone() - Expression::Constant(F::one())),
