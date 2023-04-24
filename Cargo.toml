@@ -13,8 +13,9 @@ num-bigint = { version = "0.4", features = ["rand"] }
 num-traits = "0.2.15"
 lazy_static = "1.4.0"
 wabt = "0.10.0"
-wasmi = { path = "./wasmi" }
 
+wasmi = { path = "./wasmi" }
 specs = { path = "./specs" }
 
+strum = "0.24.1"
 [dev-dependencies]

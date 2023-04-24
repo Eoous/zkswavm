@@ -52,8 +52,8 @@ impl<F: FieldExt> Circuit<F> for TestCircuit<F> {
 
     fn configure(meta: &mut halo2_proofs::plonk::ConstraintSystem<F>) -> Self::Config {
         let mut cols = [(); VAR_COLUMNS].map(|_| meta.advice_column()).into_iter();
-        let range =
-            RangeConfig::configure([meta.lookup_table_column(), meta.lookup_table_column()]);
+        let range = RangeConfig::configure([0; 3].map(|_| meta.lookup_table_column()));
+
         let init_memory = InitMemoryConfig::configure(meta.lookup_table_column());
         let instruction = InstructionConfig::configure(meta.lookup_table_column());
         let jump = JumpConfig::configure(&mut cols);

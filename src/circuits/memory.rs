@@ -47,11 +47,11 @@ impl<F: FieldExt> MemoryConfig<F> {
         meta: &mut ConstraintSystem<F>,
         cols: &mut impl Iterator<Item = Column<Advice>>,
     ) -> MemoryConfig<F> {
-        let emid = RowDiffConfig::configure("memory emid", meta, cols);
-        let ltype = RowDiffConfig::configure("memory ltype", meta, cols);
-        let mmid = RowDiffConfig::configure("memory mmid", meta, cols);
-        let offset = RowDiffConfig::configure("memory offset", meta, cols);
-        let eid = RowDiffConfig::configure("memory eid", meta, cols);
+        let emid = RowDiffConfig::configure("mtable emid", meta, cols, |_| constant_from!(1));
+        let ltype = RowDiffConfig::configure("mtable ltype", meta, cols, |_| constant_from!(1));
+        let mmid = RowDiffConfig::configure("mtable mmid", meta, cols, |_| constant_from!(1));
+        let offset = RowDiffConfig::configure("mtable offset", meta, cols, |_| constant_from!(1));
+        let eid = RowDiffConfig::configure("mtable eid", meta, cols, |_| constant_from!(1));
 
         let value = cols.next().unwrap();
         let atype = cols.next().unwrap();
