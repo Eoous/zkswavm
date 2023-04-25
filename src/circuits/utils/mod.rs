@@ -4,6 +4,8 @@ use halo2_proofs::{arithmetic::FieldExt, circuit::Region};
 use num_bigint::BigUint;
 
 pub mod row_diff;
+pub mod tvalue;
+pub mod value_64;
 
 pub struct Context<'a, F: FieldExt> {
     pub region: Box<Region<'a, F>>,
