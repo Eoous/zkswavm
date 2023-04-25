@@ -1,9 +1,10 @@
 use crate::itable::OpcodeClass::{Const, Return};
 use num_bigint::BigUint;
+use std::collections::HashSet;
 
 use crate::mtable::VarType;
 
-#[derive(Clone, Copy, Debug, Ord, PartialOrd, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub enum OpcodeClass {
     LocalGet = 1,
     Const,
@@ -61,4 +62,13 @@ pub struct InstructionTableEntry {
     pub bid: u16,
     pub iid: u16,
     pub opcode: Opcode,
+}
+
+pub fn collect_opcodeclass(ientries: &Vec<InstructionTableEntry>) -> HashSet<OpcodeClass> {
+    let mut opcodeclass = HashSet::new();
+    ientries.iter().for_each(|entry| {
+        opcodeclass.insert(entry.opcode.into());
+    });
+
+    opcodeclass
 }
