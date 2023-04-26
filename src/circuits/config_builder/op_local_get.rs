@@ -43,7 +43,6 @@ impl<F: FieldExt> EventOpcodeConfigBuilder<F> for LocalGetConfigBuilder {
 
         memory_table.configure_stack_read_in_table(
             "local get mlookup",
-            "local get mlookup rev",
             meta,
             |meta| cur!(meta, opcode_bit),
             |meta| cur!(meta, common.eid),
@@ -55,7 +54,6 @@ impl<F: FieldExt> EventOpcodeConfigBuilder<F> for LocalGetConfigBuilder {
 
         memory_table.configure_stack_write_in_table(
             "local get mlookup",
-            "local get mlookup rev",
             meta,
             |meta| cur!(meta, opcode_bit),
             |meta| cur!(meta, common.eid),

@@ -2,6 +2,7 @@ use halo2_proofs::arithmetic::FieldExt;
 use halo2_proofs::plonk::{Advice, Column, ConstraintSystem, Error, Expression, VirtualCells};
 use specs::etable::EventTableEntry;
 use specs::itable::{Opcode, OpcodeClass};
+use std::cell::Cell;
 use std::collections::BTreeMap;
 use std::marker::PhantomData;
 use std::rc::Rc;
@@ -37,6 +38,7 @@ pub trait EventOpcodeConfig<F: FieldExt> {
 #[derive(Clone)]
 pub struct EventCommonConfig {
     pub enable: Column<Advice>,
+    pub rest_mops: Column<Advice>,
     pub eid: Column<Advice>,
     pub moid: Column<Advice>,
     pub fid: Column<Advice>,
@@ -72,6 +74,7 @@ impl<F: FieldExt> EventConfig<F> {
         let mmid = cols.next().unwrap();
         let sp = cols.next().unwrap();
         let opcode = cols.next().unwrap();
+        let rest_mops = cols.next().unwrap();
         let common_config = EventCommonConfig {
             enable,
             eid,
@@ -82,6 +85,7 @@ impl<F: FieldExt> EventConfig<F> {
             mmid,
             sp,
             opcode,
+            rest_mops,
         };
 
         let mut opcode_bitmaps_vec = vec![];
@@ -175,6 +179,35 @@ impl<F: FieldExt> EventConfig<F> {
                 )
         });
 
+        meta.create_gate("rest_mops decrease", |meta| {
+            let curr_mops = opcode_bitmaps
+                .iter()
+                .map(|(opcode_class, x)| cur!(meta, *x) * constant_from!(opcode_class.mops()))
+                .reduce(|acc, x| acc + x)
+                .unwrap();
+
+            vec![
+                cur!(meta, common_config.enable)
+                    * (cur!(meta, common_config.rest_mops)
+                        - next!(meta, common_config.rest_mops)
+                        - curr_mops),
+            ]
+        });
+
+        meta.create_gate("rest_mops is zero at end", |meta| {
+            vec![
+                (cur!(meta, common_config.enable) - constant_from!(1))
+                    * cur!(meta, common_config.rest_mops),
+            ]
+        });
+
+        meta.create_gate("enable is bit", |meta| {
+            vec![
+                (cur!(meta, common_config.enable) - constant_from!(1))
+                    * cur!(meta, common_config.enable),
+            ]
+        });
+
         EventConfig {
             common_config,
             opcode_bitmaps,
@@ -201,8 +234,13 @@ impl<F: FieldExt> EventChip<F> {
         &self,
         ctx: &mut Context<'_, F>,
         entries: &Vec<EventTableEntry>,
-    ) -> Result<(), Error> {
-        for entry in entries {
+    ) -> Result<Cell<F>, Error> {
+        let mut rest_mops_cell = None;
+        let mut rest_mops = entries
+            .iter()
+            .fold(0, |acc, entry| acc + entry.inst.opcode.mops());
+
+        for (i, entry) in entries.into_iter().enumerate() {
             ctx.region.assign_advice(
                 || "event enable",
                 self.config.common_config.enable,
@@ -258,9 +296,22 @@ impl<F: FieldExt> EventChip<F> {
                 .as_ref()
                 .assign(ctx, entry)?;
 
+            let cell = ctx.region.assign_advice(
+                || concat!("event rest_mops"),
+                self.config.common_config.rest_mops,
+                ctx.offset,
+                || Ok(rest_mops.into()),
+            )?;
+
+            if i == 0 {
+                rest_mops_cell = Some(cell.cell());
+            }
+
+            rest_mops -= entry.inst.opcode.mops();
+
             ctx.next();
         }
 
-        Ok(())
+        Ok(rest_mops_cell.unwrap())
     }
 }

@@ -42,7 +42,6 @@ impl<F: FieldExt> EventOpcodeConfigBuilder<F> for ConstConfigBuilder {
 
         memory_table.configure_stack_write_in_table(
             "const mlookup",
-            "const mlookup rev",
             meta,
             |meta| cur!(meta, opcode_bit),
             |meta| cur!(meta, common.eid),

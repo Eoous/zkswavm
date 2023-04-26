@@ -12,12 +12,30 @@ pub enum OpcodeClass {
     Return,
 }
 
+impl OpcodeClass {
+    pub fn mops(&self) -> u64 {
+        match self {
+            OpcodeClass::LocalGet => 1,
+            OpcodeClass::Const => 1,
+            OpcodeClass::Drop => 0,
+            OpcodeClass::Return => 0,
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug)]
 pub enum Opcode {
     LocalGet { offset: u64 },
     Const { vtype: VarType, value: u64 },
     Drop,
     Return,
+}
+
+impl Opcode {
+    pub fn mops(&self) -> u64 {
+        let opcode_class: OpcodeClass = self.clone().into();
+        opcode_class.mops()
+    }
 }
 
 pub const OPCODE_CLASS_SHIFT: usize = 96;
