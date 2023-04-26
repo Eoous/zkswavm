@@ -1,8 +1,8 @@
 use halo2_proofs::arithmetic::FieldExt;
+use halo2_proofs::circuit::Cell;
 use halo2_proofs::plonk::{Advice, Column, ConstraintSystem, Error, Expression, VirtualCells};
 use specs::etable::EventTableEntry;
 use specs::itable::{Opcode, OpcodeClass};
-use std::cell::Cell;
 use std::collections::BTreeMap;
 use std::marker::PhantomData;
 use std::rc::Rc;
@@ -234,7 +234,7 @@ impl<F: FieldExt> EventChip<F> {
         &self,
         ctx: &mut Context<'_, F>,
         entries: &Vec<EventTableEntry>,
-    ) -> Result<Cell<F>, Error> {
+    ) -> Result<Cell, Error> {
         let mut rest_mops_cell = None;
         let mut rest_mops = entries
             .iter()
