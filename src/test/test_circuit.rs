@@ -80,14 +80,26 @@ impl<F: FieldExt> Circuit<F> for TestCircuit<F> {
         let instruction = InstructionChip::new(config.instruction);
         let memory = MemoryChip::new(config.memory);
 
+        println!(
+            "event table length is {}",
+            self.execution_tables.event.len()
+        );
+        println!(
+            "memory table length is {}",
+            self.execution_tables.memory.len()
+        );
+
         range.init(&mut layouter, 16usize)?;
         instruction.assign(&mut layouter, &self.compile_tables.instructions)?;
 
         layouter.assign_region(
-            || "memory",
+            || "table",
             |region| {
                 let mut ctx = Context::new(region);
-                memory.assign(&mut ctx, &self.execution_tables.memory)?;
+                let cell = echip.assign(&mut ctx, &self.execution_tables.event)?;
+
+                ctx.reset();
+                memory.assign(&mut ctx, &self.execution_tables.memory, cell)?;
                 Ok(())
             },
         )?;

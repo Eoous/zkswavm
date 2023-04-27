@@ -1,4 +1,5 @@
 use halo2_proofs::arithmetic::FieldExt;
+use halo2_proofs::circuit::Cell;
 use halo2_proofs::plonk::{Advice, Column, ConstraintSystem, Error, Expression, VirtualCells};
 use halo2_proofs::poly::Rotation;
 use lazy_static::lazy_static;
@@ -33,8 +34,10 @@ pub struct MemoryConfig<F: FieldExt> {
     atype: Column<Advice>,
     vtype: Column<Advice>,
     value: Column<Advice>,
-    enable: Column<Advice>,
+
     same_location: Column<Advice>,
+    enable: Column<Advice>,
+    rest_mops: Column<Advice>,
 
     _mark: PhantomData<F>,
 }
@@ -58,6 +61,7 @@ impl<F: FieldExt> MemoryConfig<F> {
         let vtype = cols.next().unwrap();
         let enable = cols.next().unwrap();
         let same_location = cols.next().unwrap();
+        let rest_mops = cols.next().unwrap();
 
         MemoryConfig {
             ltype,
@@ -70,6 +74,7 @@ impl<F: FieldExt> MemoryConfig<F> {
             value,
             enable,
             same_location,
+            rest_mops,
             _mark: PhantomData,
         }
     }
@@ -88,7 +93,6 @@ impl<F: FieldExt> MemoryConfig<F> {
     pub fn configure_stack_read_in_table(
         &self,
         key: &'static str,
-        key_rev: &'static str,
         meta: &mut ConstraintSystem<F>,
         enable: impl Fn(&mut VirtualCells<'_, F>) -> Expression<F>,
         eid: impl Fn(&mut VirtualCells<'_, F>) -> Expression<F>,
@@ -110,22 +114,6 @@ impl<F: FieldExt> MemoryConfig<F> {
                     + value(meta))
                     * enable(meta),
                 self.encode_for_lookup(meta) * enable(meta),
-            )]
-        });
-
-        meta.lookup_any(key_rev, |meta| {
-            vec![(
-                self.encode_for_lookup(meta) * enable(meta),
-                (eid(meta) * constant!(bn_to_field(&EID_SHIFT))
-                    + emid(meta) * constant!(bn_to_field(&EMID_SHIFT))
-                    + sp(meta) * constant!(bn_to_field(&OFFSET_SHIFT))
-                    + constant!(bn_to_field(&LOC_TYPE_SHIFT))
-                        * constant_from!(LocationType::Stack)
-                    + constant!(bn_to_field(&ACCESS_TYPE_SHIFT))
-                        * constant_from!(AccessType::Read)
-                    + vtype(meta) * constant!(bn_to_field(&VAR_TYPE_SHIFT))
-                    + value(meta))
-                    * enable(meta),
             )]
         });
     }
@@ -133,7 +121,6 @@ impl<F: FieldExt> MemoryConfig<F> {
     pub fn configure_stack_write_in_table(
         &self,
         key: &'static str,
-        key_rev: &'static str,
         meta: &mut ConstraintSystem<F>,
         enable: impl Fn(&mut VirtualCells<'_, F>) -> Expression<F>,
         eid: impl Fn(&mut VirtualCells<'_, F>) -> Expression<F>,
@@ -155,22 +142,6 @@ impl<F: FieldExt> MemoryConfig<F> {
                     + value(meta))
                     * enable(meta),
                 self.encode_for_lookup(meta) * enable(meta),
-            )]
-        });
-
-        meta.lookup_any(key_rev, |meta| {
-            vec![(
-                self.encode_for_lookup(meta) * enable(meta),
-                (eid(meta) * constant!(bn_to_field(&EID_SHIFT))
-                    + emid(meta) * constant!(bn_to_field(&EMID_SHIFT))
-                    + sp(meta) * constant!(bn_to_field(&OFFSET_SHIFT))
-                    + constant!(bn_to_field(&LOC_TYPE_SHIFT))
-                        * constant_from!(LocationType::Stack)
-                    + constant!(bn_to_field(&ACCESS_TYPE_SHIFT))
-                        * constant_from!(AccessType::Read)
-                    + vtype(meta) * constant!(bn_to_field(&VAR_TYPE_SHIFT))
-                    + value(meta))
-                    * enable(meta),
             )]
         });
     }
@@ -314,6 +285,16 @@ impl<F: FieldExt> MemoryConfig<F> {
                 )
         });
 
+        memory_init.configure_in_table(meta, "rest mops decrease", |meta| {
+            self.is_enable(meta)
+                * self.is_not_init(meta)
+                * (cur!(meta, self.rest_mops) - next!(meta, self.rest_mops) - constant_from!(1))
+        });
+
+        memory_init.configure_in_table(meta, "rest mop zero when disabled", |meta| {
+            (self.is_enable(meta) - constant_from!(1)) * cur!(meta, self.rest_mops)
+        });
+
         self
     }
 
@@ -333,6 +314,19 @@ impl<F: FieldExt> MemoryConfig<F> {
         let atype = cur!(meta, self.atype);
         (atype.clone() - constant_from!(AccessType::Init))
             * (atype - constant_from!(AccessType::Write))
+    }
+
+    fn is_not_init(&self, meta: &mut VirtualCells<F>) -> Expression<F> {
+        let read_f = F::from(AccessType::Read as u64);
+        let write_f = F::from(AccessType::Write as u64);
+        let init_f = F::from(AccessType::Init as u64);
+        let atype = cur!(meta, self.atype);
+        (atype.clone() - constant_from!(AccessType::Write))
+            * (atype.clone() - constant_from!(AccessType::Init))
+            * constant!(((read_f - write_f) * (read_f - init_f)).invert().unwrap())
+            + (atype.clone() - constant_from!(AccessType::Read))
+                * (atype.clone() - constant_from!(AccessType::Init))
+                * constant!(((write_f - read_f) * (write_f - init_f)).invert().unwrap())
     }
 
     fn is_same_location(&self, meta: &mut VirtualCells<F>) -> Expression<F> {
@@ -361,9 +355,13 @@ impl<F: FieldExt> MemoryChip<F> {
         &self,
         ctx: &mut Context<'_, F>,
         entries: &Vec<MemoryTableEntry>,
+        etable_rest_mops_cell: Cell,
     ) -> Result<(), Error> {
+        let mut mops = entries.iter().fold(0, |acc, e| {
+            acc + if e.atype == AccessType::Init { 0 } else { 1 }
+        });
         let mut last_entry: Option<&MemoryTableEntry> = None;
-        for entry in entries {
+        for (i, entry) in entries.into_iter().enumerate() {
             macro_rules! row_diff_assign {
                 ($x: ident) => {
                     self.config.$x.assign(
@@ -410,6 +408,17 @@ impl<F: FieldExt> MemoryChip<F> {
                 || Ok(F::one()),
             )?;
 
+            let cell = ctx.region.assign_advice(
+                || "memory enable",
+                self.config.rest_mops,
+                ctx.offset,
+                || Ok(F::from(mops)),
+            )?;
+            if i == 0 {
+                ctx.region
+                    .constrain_equal(cell.cell(), etable_rest_mops_cell)?;
+            }
+
             ctx.region.assign_advice(
                 || "memory same_location",
                 self.config.same_location,
@@ -425,6 +434,9 @@ impl<F: FieldExt> MemoryChip<F> {
                 },
             )?;
 
+            if entry.atype != AccessType::Init {
+                mops -= 1;
+            }
             last_entry = Some(entry);
             ctx.next();
         }
