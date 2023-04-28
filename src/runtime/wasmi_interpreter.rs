@@ -6,7 +6,7 @@ use specs::ExecutionTable;
 use specs::{itable::InstructionTableEntry, CompileTable};
 use std::cell::RefCell;
 use std::rc::Rc;
-use wasmi::{ImportsBuilder, ModuleInstance, RuntimeValue};
+use wasmi::{ImportsBuilder, ModuleInstance, NopExternals, RuntimeValue};
 
 pub struct WasmiRuntime {}
 
@@ -65,6 +65,21 @@ impl WasmRuntime for WasmiRuntime {
         let mut tracer = wasmi::tracer::Tracer::default();
         tracer.register_module_instance(&instance);
         let tracer = Rc::new(RefCell::new(tracer));
+
+        assert_eq!(
+            instance
+                .invoke_export_trace(
+                    function_name,
+                    &args
+                        .into_iter()
+                        .map(|v| into_wasmi_value(v))
+                        .collect::<Vec<_>>(),
+                    &mut NopExternals,
+                    tracer.clone(),
+                )
+                .expect("failed to execute export"),
+            None,
+        );
 
         let tracer = tracer.borrow();
         let events: Vec<_> = tracer.etable.0.iter().map(|e| e.clone().into()).collect();
