@@ -58,7 +58,7 @@ impl<F: FieldExt> Circuit<F> for TestCircuit<F> {
         let instruction = InstructionConfig::configure(meta.lookup_table_column());
         let jump = JumpConfig::configure(&mut cols);
         let memory = MemoryConfig::configure(meta, &mut cols, &range, &init_memory);
-        let event = EventConfig::configure(meta, &mut cols, &instruction, &memory, &jump);
+        let event = EventConfig::configure(meta, &mut cols, &range, &instruction, &memory, &jump);
 
         Self::Config {
             range,

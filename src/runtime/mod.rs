@@ -75,7 +75,11 @@ pub fn memory_event_of_step(event: &EventTableEntry) -> Vec<MemoryTableEntry> {
         StepInfo::Call { index } => {
             vec![]
         }
-        StepInfo::GetLocal { depth, value } => {
+        StepInfo::GetLocal {
+            depth,
+            vtype,
+            value,
+        } => {
             vec![
                 MemoryTableEntry {
                     eid,

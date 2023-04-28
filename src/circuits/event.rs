@@ -13,6 +13,7 @@ use crate::circuits::config_builder::op_local_get::LocalGetConfigBuilder;
 use crate::circuits::instruction::{encode_inst_expr, InstructionConfig};
 use crate::circuits::jump::JumpConfig;
 use crate::circuits::memory::MemoryConfig;
+use crate::circuits::range::RangeConfig;
 use crate::circuits::utils::{bn_to_field, Context};
 use crate::{constant, constant_from, cur, next, pre};
 
@@ -22,6 +23,7 @@ pub trait EventOpcodeConfigBuilder<F: FieldExt> {
         common: &EventCommonConfig,
         opcode_bit: Column<Advice>,
         cols: &mut impl Iterator<Item = Column<Advice>>,
+        rtable: &RangeConfig<F>,
         itable: &InstructionConfig<F>,
         mtable: &MemoryConfig<F>,
         jtable: &JumpConfig<F>,
@@ -61,6 +63,7 @@ impl<F: FieldExt> EventConfig<F> {
     pub fn configure(
         meta: &mut ConstraintSystem<F>,
         cols: &mut impl Iterator<Item = Column<Advice>>,
+        range_table: &RangeConfig<F>,
         inst_config: &InstructionConfig<F>,
         memory_table: &MemoryConfig<F>,
         jump_table: &JumpConfig<F>,
@@ -104,7 +107,8 @@ impl<F: FieldExt> EventConfig<F> {
                         meta,
                         &common_config,
                         opcode_bit.clone(),
-                        cols,
+                        &mut cols.clone(),
+                        range_table,
                         inst_config,
                         memory_table,
                         jump_table,

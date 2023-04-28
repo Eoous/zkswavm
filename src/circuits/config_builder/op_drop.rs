@@ -9,6 +9,7 @@ use crate::circuits::event::{EventCommonConfig, EventOpcodeConfig, EventOpcodeCo
 use crate::circuits::instruction::InstructionConfig;
 use crate::circuits::jump::JumpConfig;
 use crate::circuits::memory::MemoryConfig;
+use crate::circuits::range::RangeConfig;
 use crate::circuits::utils::{bn_to_field, Context};
 use crate::{constant, cur};
 
@@ -25,6 +26,7 @@ impl<F: FieldExt> EventOpcodeConfigBuilder<F> for DropConfigBuilder {
         common: &EventCommonConfig,
         opcode_bit: Column<Advice>,
         cols: &mut impl Iterator<Item = Column<Advice>>,
+        rtable: &RangeConfig<F>,
         itable: &InstructionConfig<F>,
         mtable: &MemoryConfig<F>,
         jtable: &JumpConfig<F>,
