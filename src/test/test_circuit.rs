@@ -96,7 +96,7 @@ impl<F: FieldExt> Circuit<F> for TestCircuit<F> {
             || "table",
             |region| {
                 let mut ctx = Context::new(region);
-                let cell = echip.assign(&mut ctx, &self.execution_tables.event)?;
+                let cell = event.assign(&mut ctx, &self.execution_tables.event)?;
 
                 ctx.reset();
                 memory.assign(&mut ctx, &self.execution_tables.memory, cell)?;

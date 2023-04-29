@@ -28,7 +28,7 @@ pub enum VarType {
 
 impl From<ValueType> for VarType {
     fn from(value: ValueType) -> Self {
-        match v {
+        match value {
             ValueType::I32 => Self::I32,
             ValueType::I64 => Self::I64,
             ValueType::F32 => todo!(),
