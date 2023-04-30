@@ -28,7 +28,7 @@ pub enum Opcode {
     LocalGet { vtype: VarType, offset: u64 },
     Const { vtype: VarType, value: u64 },
     Drop,
-    Return,
+    Return { drop: u32, keep: u32 },
 }
 
 impl Opcode {
