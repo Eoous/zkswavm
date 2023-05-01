@@ -83,7 +83,7 @@ impl Into<OpcodeClass> for Opcode {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct InstructionTableEntry {
     pub moid: u16,
     pub mmid: u16,

@@ -35,13 +35,14 @@ pub trait WasmRuntime {
 
 pub type WasmInterpreter = WasmiRuntime;
 
-pub fn memory_event_of_step(event: &EventTableEntry) -> Vec<MemoryTableEntry> {
+pub fn memory_event_of_step(event: &EventTableEntry, emid: &mut u64) -> Vec<MemoryTableEntry> {
     let eid = event.eid;
     let mmid = event.inst.mmid.into();
 
     match &event.step_info {
         StepInfo::BrIfNez { value, dst_pc } => mem_op_from_stack_only_step(
             eid,
+            emid,
             mmid,
             VarType::I32,
             VarType::I32,
@@ -58,6 +59,7 @@ pub fn memory_event_of_step(event: &EventTableEntry) -> Vec<MemoryTableEntry> {
             assert_eq!(*keep as usize, keep_values.len());
             mem_op_from_stack_only_step(
                 eid,
+                emit,
                 mmid,
                 VarType::I32,
                 VarType::I32,
@@ -70,7 +72,7 @@ pub fn memory_event_of_step(event: &EventTableEntry) -> Vec<MemoryTableEntry> {
             )
         }
         StepInfo::Drop { value } => {
-            mem_op_from_stack_only_step(eid, mmid, VarType::I32, VarType::I32, &[*value], &[])
+            mem_op_from_stack_only_step(eid, emid, mmid, VarType::I32, VarType::I32, &[*value], &[])
         }
         StepInfo::Call { index } => {
             vec![]
@@ -80,31 +82,35 @@ pub fn memory_event_of_step(event: &EventTableEntry) -> Vec<MemoryTableEntry> {
             vtype,
             value,
         } => {
-            vec![
-                MemoryTableEntry {
-                    eid,
-                    emid: 1,
-                    mmid,
-                    offset: *depth as u64,
-                    ltype: LocationType::Stack,
-                    atype: AccessType::Read,
-                    vtype: VarType::I32,
-                    value: *value,
-                },
-                MemoryTableEntry {
-                    eid,
-                    emid: 1,
-                    mmid: mmid.into(),
-                    offset: 0,
-                    ltype: LocationType::Stack,
-                    atype: AccessType::Write,
-                    vtype: VarType::I32,
-                    value: *value,
-                },
-            ]
+            let read = MemoryTableEntry {
+                eid,
+                emid: *emid,
+                mmid,
+                offset: *depth as u64,
+                ltype: LocationType::Stack,
+                atype: AccessType::Read,
+                vtype: *vtype,
+                value: *value,
+            };
+            *emid = (*emid).checked_add(1).unwrap();
+
+            let write = MemoryTableEntry {
+                eid,
+                emid: *emid,
+                mmid: mmid.into(),
+                offset: 0,
+                ltype: LocationType::Stack,
+                atype: AccessType::Write,
+                vtype: *vtype,
+                value: *value,
+            };
+            *emid = (*emid).checked_add(1).unwrap();
+
+            vec![read, write]
         }
         StepInfo::I32Const { value } => mem_op_from_stack_only_step(
             eid,
+            emid,
             mmid,
             VarType::I32,
             VarType::I32,
@@ -113,6 +119,7 @@ pub fn memory_event_of_step(event: &EventTableEntry) -> Vec<MemoryTableEntry> {
         ),
         StepInfo::I32BinOp { left, right, value } => mem_op_from_stack_only_step(
             eid,
+            emid,
             mmid,
             VarType::I32,
             VarType::I32,
@@ -121,6 +128,7 @@ pub fn memory_event_of_step(event: &EventTableEntry) -> Vec<MemoryTableEntry> {
         ),
         StepInfo::I32Comp { left, right, value } => mem_op_from_stack_only_step(
             eid,
+            emid,
             mmid,
             VarType::I32,
             VarType::I32,
@@ -132,6 +140,7 @@ pub fn memory_event_of_step(event: &EventTableEntry) -> Vec<MemoryTableEntry> {
 
 fn mem_op_from_stack_only_step(
     eid: u64,
+    emid: &mut u64,
     mmid: u64,
     inputs_type: VarType,
     outputs_type: VarType,
@@ -143,7 +152,7 @@ fn mem_op_from_stack_only_step(
     for i in 0..pop_values.len() {
         mem_ops.push(MemoryTableEntry {
             eid,
-            emid: 1,
+            emid: *emid,
             mmid,
             offset: i as u64,
             ltype: LocationType::Stack,
@@ -151,12 +160,13 @@ fn mem_op_from_stack_only_step(
             vtype: inputs_type,
             value: pop_values[i],
         });
+        *emid = (*emid).checked_add(1).unwrap();
     }
 
     for i in 0..push_values.len() {
         mem_ops.push(MemoryTableEntry {
             eid,
-            emid: 1,
+            emid: *emid,
             mmid,
             offset: i as u64,
             ltype: LocationType::Stack,
@@ -164,6 +174,7 @@ fn mem_op_from_stack_only_step(
             vtype: outputs_type,
             value: push_values[i],
         });
+        *emid = (*emid).checked_add(1).unwrap();
     }
 
     mem_ops

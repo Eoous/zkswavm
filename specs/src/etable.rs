@@ -1,6 +1,6 @@
 use crate::{itable::InstructionTableEntry, step::StepInfo};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct EventTableEntry {
     pub eid: u64,
     pub sp: u64,

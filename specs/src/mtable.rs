@@ -52,7 +52,7 @@ impl VarType {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct MemoryTableEntry {
     pub eid: u64,
     pub emid: u64,

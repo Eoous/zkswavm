@@ -83,7 +83,10 @@ impl WasmRuntime for WasmiRuntime {
 
         let tracer = tracer.borrow();
         let events: Vec<_> = tracer.etable.0.iter().map(|e| e.clone().into()).collect();
-        let memorys: Vec<_> = events.iter().map(|e| memory_event_of_step(e)).collect();
+        let memorys: Vec<_> = events
+            .iter()
+            .map(|e| memory_event_of_step(e, &mut 1))
+            .collect();
         let jumps = vec![];
 
         Ok(ExecutionOutcome {
