@@ -59,7 +59,7 @@ pub fn memory_event_of_step(event: &EventTableEntry, emid: &mut u64) -> Vec<Memo
             assert_eq!(*keep as usize, keep_values.len());
             mem_op_from_stack_only_step(
                 eid,
-                emit,
+                emid,
                 mmid,
                 VarType::I32,
                 VarType::I32,
