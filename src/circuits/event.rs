@@ -62,7 +62,7 @@ pub struct EventConfig<F: FieldExt> {
 impl<F: FieldExt> EventConfig<F> {
     pub fn configure(
         meta: &mut ConstraintSystem<F>,
-        cols: &mut impl Iterator<Item = Column<Advice>>,
+        cols: &mut (impl Iterator<Item = Column<Advice>> + Clone),
         range_table: &RangeConfig<F>,
         inst_config: &InstructionConfig<F>,
         memory_table: &MemoryConfig<F>,

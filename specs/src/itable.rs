@@ -62,7 +62,9 @@ impl Into<BigUint> for Opcode {
                     + value
             }
             Opcode::Drop => BigUint::from(OpcodeClass::Drop as u64) << OPCODE_CLASS_SHIFT,
-            Opcode::Return => BigUint::from(OpcodeClass::Return as u64) << OPCODE_CLASS_SHIFT,
+            Opcode::Return { .. } => {
+                BigUint::from(OpcodeClass::Return as u64) << OPCODE_CLASS_SHIFT
+            }
         };
 
         assert!(bn < BigUint::from(1u64) << 128usize);
