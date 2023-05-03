@@ -1,6 +1,6 @@
 use crate::{
     etable::EventTableEntry, imtable::InitMemoryTableEntry, itable::InstructionTableEntry,
-    jtable::JumpTableEntry, mtable::MemoryTableEntry,
+    jtable::JumpTableEntry, mtable::MTable,
 };
 
 pub mod etable;
@@ -20,6 +20,6 @@ pub struct CompileTable {
 #[derive(Default)]
 pub struct ExecutionTable {
     pub event: Vec<EventTableEntry>,
-    pub memory: Vec<MemoryTableEntry>,
+    pub memory: MTable,
     pub jump: Vec<JumpTableEntry>,
 }

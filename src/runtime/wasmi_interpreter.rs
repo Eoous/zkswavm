@@ -1,6 +1,7 @@
 use crate::runtime::memory_event_of_step;
 use crate::runtime::{CompileOutcome, ExecutionOutcome, WasmRuntime};
 use specs::etable::EventTableEntry;
+use specs::mtable::MTable;
 use specs::types::{CompileError, ExecutionError, Value};
 use specs::ExecutionTable;
 use specs::{itable::InstructionTableEntry, CompileTable};
@@ -83,16 +84,20 @@ impl WasmRuntime for WasmiRuntime {
 
         let tracer = tracer.borrow();
         let events: Vec<_> = tracer.etable.0.iter().map(|e| e.clone().into()).collect();
-        let memorys: Vec<_> = events
+        let mentries: Vec<_> = events
             .iter()
             .map(|e| memory_event_of_step(e, &mut 1))
             .collect();
+        let mentries = mentries.into_iter().flat_map(|x| x.into_iter()).collect();
+        let mut mtable = MTable::new(mentries);
+        mtable.sort();
+
         let jumps = vec![];
 
         Ok(ExecutionOutcome {
             tables: ExecutionTable {
                 event: events,
-                memory: memorys.into_iter().flat_map(|x| x.into_iter()).collect(),
+                memory: mtable,
                 jump: jumps,
             },
         })

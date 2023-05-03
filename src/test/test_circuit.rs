@@ -86,7 +86,7 @@ impl<F: FieldExt> Circuit<F> for TestCircuit<F> {
         );
         println!(
             "memory table length is {}",
-            self.execution_tables.memory.len()
+            self.execution_tables.memory.entries().len()
         );
 
         range.init(&mut layouter, 16usize)?;
@@ -99,7 +99,7 @@ impl<F: FieldExt> Circuit<F> for TestCircuit<F> {
                 let cell = event.assign(&mut ctx, &self.execution_tables.event)?;
 
                 ctx.reset();
-                memory.assign(&mut ctx, &self.execution_tables.memory, cell)?;
+                memory.assign(&mut ctx, &self.execution_tables.memory.entries(), cell)?;
                 Ok(())
             },
         )?;
