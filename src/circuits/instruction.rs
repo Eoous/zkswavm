@@ -19,7 +19,7 @@ trait Encode {
 
 impl Encode for InstructionTableEntry {
     fn encode(&self) -> BigUint {
-        let opcode: BigUint = self.opcode.into();
+        let opcode: BigUint = self.opcode.clone().into();
         let mut bn = self.encode_addr();
         bn <<= 128usize;
         bn += opcode;
