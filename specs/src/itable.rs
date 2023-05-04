@@ -3,6 +3,7 @@ use num_bigint::BigUint;
 use std::collections::HashSet;
 
 use crate::mtable::VarType;
+use crate::types::ValueType;
 
 #[derive(Clone, Copy, Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub enum OpcodeClass {
@@ -23,12 +24,12 @@ impl OpcodeClass {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub enum Opcode {
     LocalGet { vtype: VarType, offset: u64 },
     Const { vtype: VarType, value: u64 },
     Drop,
-    Return { drop: u32, keep: u32 },
+    Return { drop: u32, keep: Vec<ValueType> },
 }
 
 impl Opcode {
@@ -96,7 +97,7 @@ pub struct InstructionTableEntry {
 pub fn collect_opcodeclass(ientries: &Vec<InstructionTableEntry>) -> HashSet<OpcodeClass> {
     let mut opcodeclass = HashSet::new();
     ientries.iter().for_each(|entry| {
-        opcodeclass.insert(entry.opcode.into());
+        opcodeclass.insert(entry.opcode.clone().into());
     });
 
     opcodeclass

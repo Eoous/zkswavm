@@ -1,8 +1,20 @@
+#[derive(Clone, Copy, Debug)]
 pub enum ValueType {
     I32,
     I64,
     U32,
     U64,
+}
+
+impl From<parity_wasm::elements::ValueType> for ValueType {
+    fn from(value: parity_wasm::elements::ValueType) -> Self {
+        match value {
+            parity_wasm::elements::ValueType::I32 => ValueType::I32,
+            parity_wasm::elements::ValueType::I64 => ValueType::I64,
+            parity_wasm::elements::ValueType::F32 => todo!(),
+            parity_wasm::elements::ValueType::F64 => todo!(),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]

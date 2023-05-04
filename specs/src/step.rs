@@ -1,4 +1,5 @@
 use crate::mtable::VarType;
+use crate::types::ValueType;
 
 #[derive(Debug, Clone)]
 pub enum StepInfo {
@@ -8,7 +9,7 @@ pub enum StepInfo {
     },
     Return {
         drop: u32,
-        keep: u32,
+        keep: Vec<ValueType>,
         drop_values: Vec<u64>,
         keep_values: Vec<u64>,
     },
