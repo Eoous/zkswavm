@@ -18,6 +18,8 @@ use halo2_proofs::{
 use num_bigint::BigUint;
 use specs::etable::EventTableEntry;
 use specs::itable::OpcodeClass;
+use specs::itable::OPCODE_ARG0_SHIFT;
+use specs::itable::OPCODE_CLASS_SHIFT;
 use specs::step::StepInfo;
 
 pub struct LocalGetConfig<F: FieldExt> {
@@ -81,8 +83,10 @@ impl<F: FieldExt> EventOpcodeConfig<F> for LocalGetConfig<F> {
     fn opcode(&self, meta: &mut VirtualCells<'_, F>) -> Expression<F> {
         // (1 << 64) + offset
         constant!(bn_to_field(
-            &(BigUint::from(OpcodeClass::LocalGet as u64) << 64)
-        )) + cur!(meta, self.offset)
+            &(BigUint::from(OpcodeClass::LocalGet as u64) << OPCODE_CLASS_SHIFT)
+        )) + cur!(meta, self.tvalue.vtype)
+            * constant!(bn_to_field(&(BigUint::from(1u64) << OPCODE_ARG0_SHIFT)))
+            + cur!(meta, self.offset)
     }
 
     fn sp_diff(&self, meta: &mut VirtualCells<'_, F>) -> Expression<F> {
