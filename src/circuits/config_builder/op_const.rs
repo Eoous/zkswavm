@@ -5,7 +5,7 @@ use halo2_proofs::{
 };
 use num_bigint::BigUint;
 use specs::etable::EventTableEntry;
-use specs::itable::{OpcodeClass, OPCODE_CLASS_SHIFT, OPCODE_VTYPE_SHIFT};
+use specs::itable::{OpcodeClass, OPCODE_ARG0_SHIFT, OPCODE_CLASS_SHIFT};
 use specs::mtable::VarType;
 use specs::step::StepInfo;
 use std::marker::PhantomData;
@@ -65,7 +65,7 @@ impl<F: FieldExt> EventOpcodeConfig<F> for ConstConfig<F> {
         // 2(10) << 77
         (constant!(bn_to_field(&(BigUint::from(OpcodeClass::Const as u64) << OPCODE_CLASS_SHIFT)))
             // vartype * (1 << 77)
-            + cur!(meta, self.tvalue.vtype) * constant!(bn_to_field(&(BigUint::from(1u64) << OPCODE_VTYPE_SHIFT)))
+            + cur!(meta, self.tvalue.vtype) * constant!(bn_to_field(&(BigUint::from(1u64) << OPCODE_ARG0_SHIFT)))
             // value
             + cur!(meta, self.tvalue.value.value))
             * cur!(meta, self.enable)

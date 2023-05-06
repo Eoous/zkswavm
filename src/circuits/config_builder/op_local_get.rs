@@ -43,8 +43,12 @@ impl<F: FieldExt> EventOpcodeConfigBuilder<F> for LocalGetConfigBuilder {
         let tvalue =
             TValueConfig::configure(meta, cols, range_table, |meta| cur!(meta, opcode_bit));
 
+        range_table.configure_in_common_range(meta, "localget offset range", |meta| {
+            cur!(meta, opcode_bit) * cur!(meta, offset)
+        });
+
         memory_table.configure_stack_read_in_table(
-            "local get mlookup",
+            "local get mlookup #1",
             meta,
             |meta| cur!(meta, opcode_bit),
             |meta| cur!(meta, common.eid),
@@ -55,7 +59,7 @@ impl<F: FieldExt> EventOpcodeConfigBuilder<F> for LocalGetConfigBuilder {
         );
 
         memory_table.configure_stack_write_in_table(
-            "local get mlookup",
+            "local get mlookup #2",
             meta,
             |meta| cur!(meta, opcode_bit),
             |meta| cur!(meta, common.eid),
