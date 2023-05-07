@@ -15,7 +15,6 @@ use specs::itable::OPCODE_ARG0_SHIFT;
 use specs::itable::OPCODE_CLASS_SHIFT;
 use specs::itable::{OpcodeClass, OPCODE_ARG1_SHIFT};
 use specs::mtable::VarType;
-use std::intrinsics::const_allocate;
 
 pub struct ReturnConfig<F: FieldExt> {
     drop: Column<Advice>,
