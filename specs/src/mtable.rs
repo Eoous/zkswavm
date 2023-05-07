@@ -1,3 +1,4 @@
+use crate::types::Value;
 use parity_wasm::elements::ValueType;
 use strum_macros::EnumIter;
 
@@ -27,12 +28,22 @@ pub enum VarType {
 }
 
 impl From<ValueType> for VarType {
-    fn from(value: ValueType) -> Self {
+    fn from(value: ValueType) -> VarType {
         match value {
             ValueType::I32 => Self::I32,
             ValueType::I64 => Self::I64,
             ValueType::F32 => todo!(),
             ValueType::F64 => todo!(),
+        }
+    }
+}
+
+impl From<crate::types::ValueType> for VarType {
+    fn from(value: crate::types::ValueType) -> VarType {
+        match value {
+            crate::types::ValueType::I32 => VarType::I32,
+            crate::types::ValueType::I64 => VarType::I64,
+            _ => todo!(),
         }
     }
 }
