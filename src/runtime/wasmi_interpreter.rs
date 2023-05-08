@@ -92,7 +92,14 @@ impl WasmRuntime for WasmiRuntime {
         let mut mtable = MTable::new(mentries);
         mtable.sort();
 
-        let jumps = vec![];
+        let jumps = tracer
+            .jtable
+            .as_ref()
+            .unwrap()
+            .0
+            .iter()
+            .map(|jump| (*jump).clone().into())
+            .collect::<Vec<_>>();
 
         Ok(ExecutionOutcome {
             tables: ExecutionTable {
