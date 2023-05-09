@@ -10,6 +10,7 @@ use std::rc::Rc;
 use crate::circuits::config_builder::op_const::ConstConfigBuilder;
 use crate::circuits::config_builder::op_drop::DropConfigBuilder;
 use crate::circuits::config_builder::op_local_get::LocalGetConfigBuilder;
+use crate::circuits::config_builder::op_return::ReturnConfigBuilder;
 use crate::circuits::instruction::{encode_inst_expr, InstructionConfig};
 use crate::circuits::jump::JumpConfig;
 use crate::circuits::memory::MemoryConfig;
@@ -119,7 +120,12 @@ impl<F: FieldExt> EventConfig<F> {
             })
         ];
 
-        configure![ConstConfigBuilder, DropConfigBuilder, LocalGetConfigBuilder];
+        configure![
+            ConstConfigBuilder,
+            DropConfigBuilder,
+            LocalGetConfigBuilder,
+            ReturnConfigBuilder
+        ];
 
         meta.create_gate("opcode consistent", |meta| {
             let mut acc = constant_from!(0u64);
