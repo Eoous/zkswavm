@@ -100,6 +100,7 @@ impl WasmRuntime for WasmiRuntime {
             .iter()
             .map(|jump| (*jump).clone().into())
             .collect::<Vec<_>>();
+        println!("{:?}", jumps);
 
         Ok(ExecutionOutcome {
             tables: ExecutionTable {
