@@ -74,5 +74,5 @@ fn main() {
     );
 
     // println!("{:?}", tracer);
-    println!("{:?}", (*tracer).borrow().itable);
+    println!("{:?}", (*tracer).borrow().etable);
 }
